@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./knowledge-base.db"
+}
+
+
+model User {
+  id            Int           @id @default(autoincrement())
+  admin         Boolean       @default(false)
+  name          String        @unique
+  password      String
+  avatar        String
+  collections   Entry[]       @relation("Collections")
+  feedbacks     Feedback[]
+}
+
+model Entry {
+  id            Int           @id @default(autoincrement())
+  name          String        @unique
+  tags          Tag[]         @relation("Tagging")
+  introduction  String
+  content       String
+  collectedBy   User[]        @relation("Collections")
+  feedbacks     Feedback[]
+}
+
+model Tag {
+  id            Int           @id @default(autoincrement())
+  name          String        @unique
+  entries       Entry[]       @relation("Tagging")
+}
+
+model Feedback {
+  id            Int           @id @default(autoincrement())
+  user          User          @relation(fields: [userId], references: [id])
+  userId        Int
+  entry         Entry         @relation(fields: [entryId], references: [id])
+  entryId       Int
+  description   String
+  solved        Boolean       @default(false)
+  response      String?
+}
