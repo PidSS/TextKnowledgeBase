@@ -87,9 +87,16 @@ fun MainScreen(cards: List<CardData>) {
                     CardDetailScreen(card = card)
                 }
             }
+            composable("favorites") {
+                FavoriteScreen(cards = cards, navController = navController)
+            }
+            composable("profile") {
+                ProfileScreen(cards = cards, selectedTab = selectedTab, onTabSelected = { selectedTab = it }, navController = navController)
+            }
         }
     }
 }
+
 
 @Composable
 fun HomeScreen(cards: List<CardData>, selectedTab: Int, onTabSelected: (Int) -> Unit, navController: NavHostController) {
@@ -97,10 +104,11 @@ fun HomeScreen(cards: List<CardData>, selectedTab: Int, onTabSelected: (Int) -> 
         when (selectedTab) {
             0 -> HorizontalCardList(cards = cards, navController = navController)
             1 -> FavoriteScreen(cards = cards, navController = navController)
-            2 -> ProfileScreen(cards = cards, selectedTab = selectedTab, onTabSelected = onTabSelected)
+            2 -> ProfileScreen(cards = cards, selectedTab = selectedTab, onTabSelected = onTabSelected, navController = navController)
         }
     }
 }
+
 
 @Composable
 fun SearchBar() {
@@ -153,60 +161,48 @@ fun HorizontalCardList(cards: List<CardData>, navController: NavHostController) 
 }
 
 @Composable
-fun FavoriteScreen(navController: NavHostController, cards: List<CardData>) {
-    Scaffold(
-        bottomBar = {
-            BottomNavigationBar(
-                selectedTab = 1,
-                onTabSelected = { tab ->
-                    when (tab) {
-                        0 -> navController.navigate("home")
-                        2 -> navController.navigate("profile")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
+fun FavoriteScreen(cards: List<CardData>, navController: NavHostController) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "收藏",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = "收藏",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(cards) { card ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .padding(16.dp)
-                        ) {
-                            Text(
-                                text = card.title,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = card.description,
-                                fontSize = 16.sp,
-                                color = Color.Black
-                            )
+            items(cards) { card ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .clickable {
+                            navController.navigate("details/${card.id}")
                         }
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = card.title,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = card.description,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
                     }
                 }
             }
@@ -214,74 +210,71 @@ fun FavoriteScreen(navController: NavHostController, cards: List<CardData>) {
     }
 }
 
+
+
 @Composable
-fun ProfileScreen(cards: List<CardData>, selectedTab: Int, onTabSelected: (Int) -> Unit) {
-    Scaffold(
-        bottomBar = {
-            BottomNavigationBar(
-                selectedTab = selectedTab,
-                onTabSelected = onTabSelected
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
+fun ProfileScreen(cards: List<CardData>, selectedTab: Int, onTabSelected: (Int) -> Unit, navController: NavHostController) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Default.AccountCircle,
+            contentDescription = null,
+            modifier = Modifier.size(100.dp)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "用户名",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "浏览记录",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = null,
-                modifier = Modifier.size(100.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "用户名",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "浏览记录",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(cards) { card ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .padding(16.dp)
-                        ) {
-                            Text(
-                                text = card.title,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = card.description,
-                                fontSize = 16.sp,
-                                color = Color.Black
-                            )
+            items(cards) { card ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .clickable {
+                            navController.navigate("details/${card.id}")
                         }
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = card.title,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = card.description,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
                     }
                 }
             }
         }
     }
 }
+
+
 
 @Composable
 fun BottomNavigationBar(selectedTab: Int, onTabSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
@@ -367,14 +360,14 @@ fun PreviewMainScreen() {
         MainScreen(cards = cards)
     }
 }
-
 @Preview(showBackground = true)
 @Composable
 fun PreviewProfileScreen() {
     ComposeTutorialTheme {
-        ProfileScreen(cards = cards, selectedTab = 2, onTabSelected = {})
+        ProfileScreen(cards = cards, selectedTab = 2, onTabSelected = {}, navController = rememberNavController())
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable
@@ -382,5 +375,18 @@ fun PreviewFavoriteScreen() {
     ComposeTutorialTheme {
         val navController = rememberNavController() // 创建一个模拟的NavController
         FavoriteScreen(navController = navController, cards = cards) // 提供所需参数
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewCardDetailScreen() {
+    val sampleCard = CardData(
+        id = "1",
+        title = "SQL注入",
+        description = "SQL注入是一种通过在输入字段中插入恶意SQL代码来攻击应用程序的技术。"
+    )
+    ComposeTutorialTheme {
+        CardDetailScreen(card = sampleCard)
     }
 }
