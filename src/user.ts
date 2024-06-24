@@ -23,9 +23,53 @@
  *               type: string
  *             avatar:
  *               type: string
+ *             collections:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   name:
+ *                     type: string
+ *                   introduction:
+ *                     type: string
+ *             admin:
+ *               type: boolean
+ *             feedbacks:
+ *               type: array
+ *               items:
+ *                 type: object
+ *     UserInfoWithToken:
+ *       application/json:
+ *         schema:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: integer
+ *             name:
+ *               type: string
+ *             avatar:
+ *               type: string
+ *             collections:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   name:
+ *                     type: string
+ *                   introduction:
+ *                     type: string
+ *             admin:
+ *               type: boolean
+ *             feedbacks:
+ *               type: array
+ *               items:
+ *                 type: object
  *             token:
  *               type: string
- *               description: JWT token
  *     LoginInfo:
  *       application/json:
  *         schema:
@@ -49,12 +93,18 @@ const db = new PrismaClient();
 
 const secretKey = process.env.SECRET_KEY || "software";
 
+// interface JwtUser {
+//     id: number;
+//     name: string;
+//     admin: boolean;
+// }
+
 function jwtSign(user: {
     id: number;
     admin: boolean;
     name: string;
-    password: string;
     avatar: string;
+    [key: string]: any;
 }): string {
     return jwt.sign(
         {
@@ -71,6 +121,21 @@ router.use(
     expressjwt({ secret: secretKey, algorithms: ["HS256"] })
 );
 
+const UserInfoWithoutPassword = {
+    id: true,
+    name: true,
+    avatar: true,
+    collections: {
+        select: {
+            id: true,
+            name: true,
+            introduction: true,
+        },
+    },
+    admin: true,
+    feedbacks: true,
+};
+
 /**
  * @openapi
  * /user/login:
@@ -86,7 +151,7 @@ router.use(
  *       200:
  *        description: 登录成功
  *        content:
- *          $ref: '#/components/schemas/UserInfo'
+ *          $ref: '#/components/schemas/UserInfoWithToken'
  *       401:
  *         description: 用户名或密码不正确
  *         content:
@@ -102,6 +167,7 @@ router.post("/login", async (req, res) => {
 
     const user = await db.user.findUnique({
         where: { name, password },
+        select: UserInfoWithoutPassword,
     });
     if (user === null) {
         res.status(401).json({
@@ -111,13 +177,11 @@ router.post("/login", async (req, res) => {
     }
 
     // 剔除 password，添加 token，然后返回
-    const { password: _, ...result } = user;
     res.json({
-        ...result,
+        ...user,
         token: jwtSign(user),
     });
 });
-
 
 /**
  * @openapi
@@ -134,7 +198,7 @@ router.post("/login", async (req, res) => {
  *       200:
  *         description: 注册成功
  *         content:
- *           $ref: '#/components/schemas/UserInfo'
+ *           $ref: '#/components/schemas/UserInfoWithToken'
  *       400:
  *         description: 用户名已注册 / 参数类型错误
  *         content:
@@ -151,12 +215,13 @@ router.post("/register", async (req, res) => {
                 password,
                 avatar: "/avatars/default_avatars/big-steve-face.png",
             },
+            // 剔除 password
+            select: UserInfoWithoutPassword,
         });
 
-        // 剔除 password，添加 token，然后返回
-        const { password: _, ...result } = user;
+        // 添加 token，然后返回
         res.json({
-            ...result,
+            ...user,
             token: jwtSign(user),
         });
     } catch (error) {
@@ -173,10 +238,164 @@ router.post("/register", async (req, res) => {
     }
 });
 
-router.get("/profile");
 
-router.get("/collect/:id");
+/**
+ * @openapi
+ * /user/profile/{id}:
+ *   get:
+ *     summary: 获取用户信息
+ *     description: "获取自己指或定用户的信息（若不提供id，则获取自己的信息；提供则获取指定id的用户的信息）。<br />需要登陆。"
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: false
+ *         description: 用户的 ID
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 成功获取用户信息
+ *         content:
+ *           $ref: '#/components/schemas/UserInfo'
+ *       404:
+ *         description: 用户不存在
+ *         content:
+ *           $ref: '#/components/schemas/Error'
+ * @requiresAuth
+ */
+router.get("/profile", (req, res) => {
+    const userId = req.auth.id;
 
-router.get("/uncollect/:id");
+    db.user
+        .findUnique({
+            where: { id: userId },
+            // select 时不包含 password
+            select: UserInfoWithoutPassword,
+        })
+        .then((user) => {
+            if (user === null) {
+                res.status(404).json({
+                    error: "用户不存在",
+                });
+                return;
+            }
+
+            res.json(user);
+        });
+});
+
+router.get("/profile/:id", (req, res) => {
+    const userId = z.number().parse(parseInt(req.params.id));
+
+    db.user
+        .findUnique({
+            where: { id: userId },
+            // select 时不包含 password
+            select: UserInfoWithoutPassword,
+        })
+        .then((user) => {
+            if (user === null) {
+                res.status(404).json({
+                    error: "用户不存在",
+                });
+                return;
+            } else res.json(user);
+        });
+});
+
+/**
+ * @openapi
+ * /user/collect/{id}:
+ *   get:
+ *     summary: 收藏知识条目
+ *     description: "收藏知识条目。<br />需要登陆。"
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: 知识条目的 ID
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 收藏成功（注意，如果条目已被收藏，也会返回 200）
+ *       404:
+ *         description: 指定的条目不存在
+ * @requiresAuth
+ */
+router.get("/collect/:id", (req, res) => {
+    const id = z.number().parse(parseInt(req.params.id));
+    const userId = req.auth.id;
+
+    db.user
+        .update({
+            where: { id: userId },
+            data: {
+                collections: {
+                    connect: { id },
+                },
+            },
+        })
+        .then(() => {
+            res.sendStatus(200);
+        })
+        .catch((err) => {
+            res.status(404).json({
+                error: "指定的条目不存在",
+            });
+        });
+});
+
+/**
+ * @openapi
+ * /user/uncollect/{id}:
+ *   get:
+ *     summary: 取消收藏知识条目
+ *     description: "取消收藏指定知识条目。<br />需要登陆。"
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: 知识条目的 ID
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 取消收藏成功（注意，如果条目本身未被收藏，也会返回 200）
+ *       404:
+ *         description: 指定的条目不存在
+ * @requiresAuth
+ */
+router.get("/uncollect/:id", (req, res) => {
+    const id = z.number().parse(parseInt(req.params.id));
+    const userId = req.auth.id;
+
+    db.user
+        .update({
+            where: { id: userId },
+            data: {
+                collections: {
+                    disconnect: { id },
+                },
+            },
+        })
+        .then(() => {
+            res.sendStatus(200);
+        })
+        .catch((err) => {
+            res.status(404).json({
+                error: "指定的条目不存在",
+            });
+        });
+});
 
 export default router;
