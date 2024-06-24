@@ -4,6 +4,7 @@ import { ZodError } from "Zod";
 
 import UserRouter from "./user";
 import EntryRouter from "./entry";
+import AdminRouter from "./admin";
 
 const app: Application = express();
 
@@ -16,8 +17,8 @@ const openapiSpec = swaggerJsdoc(swaggerOptions)
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapiSpec))
 
 // 配置静态资源
-app.use("/avatars", express.static("../static/avatars"));
-app.use("/images", express.static("../static/images"));
+app.use("/avatars", express.static("./static/avatars"));
+app.use("/images", express.static("./static/images"));
 
 // 配置中间件
 app.use(bodyParser.json());
@@ -25,6 +26,7 @@ app.use(bodyParser.json());
 // 配置路由
 app.use("/user", UserRouter);
 app.use("/entry", EntryRouter);
+app.use("/admin", AdminRouter);
 
 // 配置根路由（仅用于确认服务是否可用）
 app.get("/", (req, res) => {

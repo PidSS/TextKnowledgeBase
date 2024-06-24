@@ -86,12 +86,16 @@ import jwt from "jsonwebtoken";
 import { expressjwt } from "express-jwt";
 import { z } from "Zod";
 import { Prisma, PrismaClient } from "@prisma/client";
+import crypto from "crypto";
 
 const router: Router = express.Router();
 
 const db = new PrismaClient();
 
 const secretKey = process.env.SECRET_KEY || "software";
+
+const hash = (value: string) =>
+    parseInt(crypto.createHash("md5").update(value).digest("hex"), 16);
 
 // interface JwtUser {
 //     id: number;
@@ -208,13 +212,22 @@ router.post("/register", async (req, res) => {
     const RegisterInfo = z.object({ name: z.string(), password: z.string() });
     const { name, password } = RegisterInfo.parse(req.body);
 
+    const defaultAvatars = [
+        "big-husk-face.png",
+        "big-slime-face.png",
+        "big-steve-face.png",
+        "big-zombie-face.png",
+        "big-mooshroom-face.png",
+        "big-snowgolem-face.png",
+        "big-vex-face.png",
+    ];
+    // 从默认头像中根据用户名哈希值选择一个作为用户的头像
+    // prrttier-ignore
+    const avatar = `/avatars/default_avatars/${defaultAvatars[Math.abs(hash(name) % defaultAvatars.length)]}`;
+
     try {
         const user = await db.user.create({
-            data: {
-                name,
-                password,
-                avatar: "/avatars/default_avatars/big-steve-face.png",
-            },
+            data: { name, password, avatar },
             // 剔除 password
             select: UserInfoWithoutPassword,
         });
@@ -237,7 +250,6 @@ router.post("/register", async (req, res) => {
         throw error;
     }
 });
-
 
 /**
  * @openapi
