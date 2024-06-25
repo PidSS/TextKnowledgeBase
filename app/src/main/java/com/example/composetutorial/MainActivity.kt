@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.composetutorial.ui.theme.ComposeTutorialTheme
 import com.example.myapp.CardData
@@ -63,13 +64,19 @@ fun MainScreen(cards: List<CardData>) {
     val navController = rememberNavController()
     var selectedTab by remember { mutableStateOf(0) }
 
+    // Determine if the current route is the card detail screen
+    val currentBackStackEntry = navController.currentBackStackEntryAsState().value
+    val showBottomBar = currentBackStackEntry?.destination?.route != "details/{cardId}"
+
     Scaffold(
         topBar = { SearchBar() },
         bottomBar = {
-            BottomNavigationBar(
-                selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it }
-            )
+            if (showBottomBar) {
+                BottomNavigationBar(
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it }
+                )
+            }
         }
     ) { innerPadding ->
         NavHost(
@@ -96,6 +103,7 @@ fun MainScreen(cards: List<CardData>) {
         }
     }
 }
+
 
 
 @Composable
