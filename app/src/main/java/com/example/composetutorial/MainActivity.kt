@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -63,6 +64,7 @@ class MainActivity : ComponentActivity() {
 fun MainScreen(cards: List<CardData>) {
     val navController = rememberNavController()
     var selectedTab by remember { mutableStateOf(0) }
+    var isLoggedIn by remember { mutableStateOf(false) } // 添加登录状态管理
 
     // Determine if the current route is the card detail screen
     val currentBackStackEntry = navController.currentBackStackEntryAsState().value
@@ -85,7 +87,14 @@ fun MainScreen(cards: List<CardData>) {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") {
-                HomeScreen(cards = cards, selectedTab = selectedTab, onTabSelected = { selectedTab = it }, navController = navController)
+                HomeScreen(
+                    cards = cards,
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it },
+                    navController = navController,
+                    isLoggedIn = isLoggedIn, // 传递登录状态
+                    onLoginStatusChanged = { isLoggedIn = it } // 处理登录状态变化
+                )
             }
             composable("details/{cardId}") { backStackEntry ->
                 val cardId = backStackEntry.arguments?.getString("cardId")
@@ -98,7 +107,56 @@ fun MainScreen(cards: List<CardData>) {
                 FavoriteScreen(cards = cards, navController = navController)
             }
             composable("profile") {
-                ProfileScreen(cards = cards, selectedTab = selectedTab, onTabSelected = { selectedTab = it }, navController = navController)
+                ProfileScreen(
+                    cards = cards,
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it },
+                    navController = navController,
+                    isLoggedIn = isLoggedIn, // 传递登录状态
+                    onLoginStatusChanged = { isLoggedIn = it } // 处理登录状态变化
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit) {
+    var showRegisterForm by remember { mutableStateOf(false) } // 添加状态变量控制是否显示注册表单
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(text = "请登录或注册", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        if (!showRegisterForm) {
+            // 当不显示注册表单时显示登录和注册按钮
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = onLogin) {
+                Text(text = "登录")
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick = { showRegisterForm = true }) { // 点击注册按钮显示注册表单
+                Text(text = "注册")
+            }
+        }
+
+        if (showRegisterForm) {
+            // 显示注册表单
+            Spacer(modifier = Modifier.height(16.dp))
+            // 添加注册表单内容，如用户名、密码、确认密码等
+            TextField(value = "", onValueChange = { /* 处理用户名输入 */ }, label = { Text("用户名") })
+            Spacer(modifier = Modifier.height(8.dp))
+            TextField(value = "", onValueChange = { /* 处理密码输入 */ }, label = { Text("密码") })
+            Spacer(modifier = Modifier.height(8.dp))
+            TextField(value = "", onValueChange = { /* 处理确认密码输入 */ }, label = { Text("确认密码") })
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = { /* 处理注册逻辑 */ }) {
+                Text(text = "确认注册")
             }
         }
     }
@@ -106,16 +164,32 @@ fun MainScreen(cards: List<CardData>) {
 
 
 
+
 @Composable
-fun HomeScreen(cards: List<CardData>, selectedTab: Int, onTabSelected: (Int) -> Unit, navController: NavHostController) {
+fun HomeScreen(
+    cards: List<CardData>,
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    navController: NavHostController,
+    isLoggedIn: Boolean,
+    onLoginStatusChanged: (Boolean) -> Unit
+) {
     Box(modifier = Modifier.fillMaxSize()) {
         when (selectedTab) {
             0 -> HorizontalCardList(cards = cards, navController = navController)
             1 -> FavoriteScreen(cards = cards, navController = navController)
-            2 -> ProfileScreen(cards = cards, selectedTab = selectedTab, onTabSelected = onTabSelected, navController = navController)
+            2 -> ProfileScreen(
+                cards = cards,
+                selectedTab = selectedTab,
+                onTabSelected = onTabSelected,
+                navController = navController,
+                isLoggedIn = isLoggedIn,
+                onLoginStatusChanged = onLoginStatusChanged
+            )
         }
     }
 }
+
 
 
 @Composable
@@ -221,64 +295,80 @@ fun FavoriteScreen(cards: List<CardData>, navController: NavHostController) {
 
 
 @Composable
-fun ProfileScreen(cards: List<CardData>, selectedTab: Int, onTabSelected: (Int) -> Unit, navController: NavHostController) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            imageVector = Icons.Default.AccountCircle,
-            contentDescription = null,
-            modifier = Modifier.size(100.dp)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "用户名",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "浏览记录",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+fun ProfileScreen(
+    cards: List<CardData>,
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    navController: NavHostController,
+    isLoggedIn: Boolean,
+    onLoginStatusChanged: (Boolean) -> Unit
+) {
+    if (isLoggedIn) {
+        // 已登录状态下显示的内容
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            items(cards) { card ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .clickable {
-                            navController.navigate("details/${card.id}")
-                        }
-                ) {
-                    Column(
+            Icon(
+                imageVector = Icons.Default.AccountCircle,
+                contentDescription = null,
+                modifier = Modifier.size(100.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "用户名",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "浏览记录",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(cards) { card ->
+                    Card(
                         modifier = Modifier
-                            .padding(16.dp)
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .clickable {
+                                navController.navigate("details/${card.id}")
+                            }
                     ) {
-                        Text(
-                            text = card.title,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = card.description,
-                            fontSize = 16.sp,
-                            color = Color.Black
-                        )
+                        Column(
+                            modifier = Modifier
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = card.title,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = card.description,
+                                fontSize = 16.sp,
+                                color = Color.Black
+                            )
+                        }
                     }
                 }
             }
         }
+    } else {
+        // 未登录状态下显示的内容
+        LoginScreen(
+            onLogin = { onLoginStatusChanged(true) },
+            onRegister = { /* 处理注册逻辑 */ }
+        )
     }
 }
 
@@ -372,9 +462,18 @@ fun PreviewMainScreen() {
 @Composable
 fun PreviewProfileScreen() {
     ComposeTutorialTheme {
-        ProfileScreen(cards = cards, selectedTab = 2, onTabSelected = {}, navController = rememberNavController())
+        val navController = rememberNavController() // 创建一个模拟的 NavController
+        ProfileScreen(
+            cards = cards,
+            selectedTab = 2,
+            onTabSelected = {},
+            navController = navController,
+            isLoggedIn = false, // 添加登录状态参数
+            onLoginStatusChanged = {} // 添加处理登录状态变化的参数
+        )
     }
 }
+
 
 
 @Preview(showBackground = true)
