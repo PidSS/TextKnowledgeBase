@@ -1,5 +1,6 @@
 import express, { Application, ErrorRequestHandler } from "express";
 import "express-async-errors";
+import cors from "cors";
 import bodyParser from "body-parser";
 import { ZodError } from "Zod";
 
@@ -16,6 +17,9 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerOptions = require("../swagger-options.json");
 const openapiSpec = swaggerJsdoc(swaggerOptions)
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapiSpec))
+
+// 配置跨域
+app.use(cors())
 
 // 配置静态资源
 app.use("/avatars", express.static("./static/avatars"));
