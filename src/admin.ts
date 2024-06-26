@@ -35,7 +35,7 @@ router.use((req, res, next) => {
  * @openapi
  * /admin/createEntry:
  *   post:
- *     summary: 创建新的知识条目
+ *     summary: 创建新的知识条目 <admin>
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
@@ -98,7 +98,7 @@ router.post("/createEntry", async (req, res) => {
  * @openapi
  * /admin/deleteEntry:
  *   post:
- *     summary: 删除指定 ID 的知识条目
+ *     summary: 删除指定 ID 的知识条目 <admin>
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
@@ -151,7 +151,7 @@ router.post("/deleteEntry", async (req, res) => {
  * @openapi
  * /admin/updateEntry:
  *   post:
- *     summary: 更新指定 ID 的知识条目
+ *     summary: 更新指定 ID 的知识条目 <admin>
  *     description: 可以更新知识条目的名称、简介和内容。必须指定 id，但其他字段是非必须的，只有提供了的字段会被更新。
  *     tags: [Admin]
  *     security:

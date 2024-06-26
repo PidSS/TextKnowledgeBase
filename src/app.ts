@@ -7,6 +7,7 @@ import { ZodError } from "Zod";
 import UserRouter from "./user";
 import EntryRouter from "./entry";
 import AdminRouter from "./admin";
+import FeedbackRouter from "./feedback";
 
 const app: Application = express();
 
@@ -32,6 +33,7 @@ app.use(bodyParser.json());
 app.use("/user", UserRouter);
 app.use("/entry", EntryRouter);
 app.use("/admin", AdminRouter);
+app.use("/feedback", FeedbackRouter);
 
 // 配置根路由（仅用于确认服务是否可用）
 app.get("/", (req, res) => {
