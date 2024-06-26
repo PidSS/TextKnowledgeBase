@@ -1,5 +1,6 @@
 package com.example.composetutorial
 
+import RegisterRequest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,11 +33,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,23 +51,41 @@ import androidx.navigation.compose.rememberNavController
 import com.example.composetutorial.ui.theme.ComposeTutorialTheme
 import com.example.myapp.CardData
 import com.example.myapp.CardSampleData.cards
+import kotlinx.coroutines.launch
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            ComposeTutorialTheme {
-                MainScreen(cards = cards)
-            }
+            MainActivityContent()
         }
     }
 }
 
 @Composable
-fun MainScreen(cards: List<CardData>) {
+fun MainActivityContent() {
+    val navController = rememberNavController()
+    var isLoggedIn by remember { mutableStateOf(false) }
+
+    ComposeTutorialTheme {
+        MainScreen(
+            cards = cards,
+            isLoggedIn = isLoggedIn,
+            onLoginStatusChanged = { isLoggedIn = it }
+        )
+    }
+}
+
+
+
+
+
+
+@Composable
+fun MainScreen(cards: List<CardData>, isLoggedIn: Boolean, onLoginStatusChanged: (Boolean) -> Unit) {
     val navController = rememberNavController()
     var selectedTab by remember { mutableStateOf(0) }
-    var isLoggedIn by remember { mutableStateOf(false) } // 添加登录状态管理
 
     // Determine if the current route is the card detail screen
     val currentBackStackEntry = navController.currentBackStackEntryAsState().value
@@ -83,7 +104,7 @@ fun MainScreen(cards: List<CardData>) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "home",
+            startDestination = if (isLoggedIn) "home" else "profile",
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") {
@@ -92,8 +113,8 @@ fun MainScreen(cards: List<CardData>) {
                     selectedTab = selectedTab,
                     onTabSelected = { selectedTab = it },
                     navController = navController,
-                    isLoggedIn = isLoggedIn, // 传递登录状态
-                    onLoginStatusChanged = { isLoggedIn = it } // 处理登录状态变化
+                    isLoggedIn = isLoggedIn,
+                    onLoginStatusChanged = onLoginStatusChanged
                 )
             }
             composable("details/{cardId}") { backStackEntry ->
@@ -112,8 +133,8 @@ fun MainScreen(cards: List<CardData>) {
                     selectedTab = selectedTab,
                     onTabSelected = { selectedTab = it },
                     navController = navController,
-                    isLoggedIn = isLoggedIn, // 传递登录状态
-                    onLoginStatusChanged = { isLoggedIn = it } // 处理登录状态变化
+                    isLoggedIn = isLoggedIn,
+                    onLoginStatusChanged = onLoginStatusChanged
                 )
             }
         }
@@ -121,9 +142,17 @@ fun MainScreen(cards: List<CardData>) {
 }
 
 
+
+
 @Composable
 fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit) {
-    var showRegisterForm by remember { mutableStateOf(false) } // 添加状态变量控制是否显示注册表单
+    var showRegisterForm by remember { mutableStateOf(false) }
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf("") }
+    var successMessage by remember { mutableStateOf("") }
+    val coroutineScope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -134,29 +163,85 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit) {
     ) {
         Text(text = "请登录或注册", fontSize = 24.sp, fontWeight = FontWeight.Bold)
         if (!showRegisterForm) {
-            // 当不显示注册表单时显示登录和注册按钮
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = onLogin) {
                 Text(text = "登录")
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { showRegisterForm = true }) { // 点击注册按钮显示注册表单
+            Button(onClick = { showRegisterForm = true }) {
                 Text(text = "注册")
             }
         }
 
         if (showRegisterForm) {
-            // 显示注册表单
-            Spacer(modifier = Modifier.height(16.dp))
-            // 添加注册表单内容，如用户名、密码、确认密码等
-            TextField(value = "", onValueChange = { /* 处理用户名输入 */ }, label = { Text("用户名") })
-            Spacer(modifier = Modifier.height(8.dp))
-            TextField(value = "", onValueChange = { /* 处理密码输入 */ }, label = { Text("密码") })
-            Spacer(modifier = Modifier.height(8.dp))
-            TextField(value = "", onValueChange = { /* 处理确认密码输入 */ }, label = { Text("确认密码") })
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { /* 处理注册逻辑 */ }) {
-                Text(text = "确认注册")
+            // 注册表单
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Spacer(modifier = Modifier.height(16.dp))
+                TextField(
+                    value = username,
+                    onValueChange = { newUsername -> username = newUsername },
+                    label = { Text("用户名") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+                TextField(
+                    value = password,
+                    onValueChange = { newText -> password = newText },
+                    label = { Text("密码") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                TextField(
+                    value = confirmPassword,
+                    onValueChange = { newText -> confirmPassword = newText },
+                    label = { Text("确认密码") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(onClick = {
+                    if (password == confirmPassword) {
+                        coroutineScope.launch {
+                            try {
+                                val request = RegisterRequest(username, password)
+                                val response = RetrofitClient.instance.register(request)
+                                if (response.success) {
+                                    // 确认注册成功后更新状态
+                                    successMessage = "注册成功"
+                                    errorMessage = ""  // 清空错误消息
+                                    onRegister() // 通知注册成功
+                                } else {
+                                    errorMessage = response.message ?: "注册失败：未知错误"
+                                    // 在注册失败时清空成功消息，确保只显示注册失败消息
+                                    successMessage = "注册成功"
+                                }
+                            } catch (e: Exception) {
+                                errorMessage = "注册失败：${e.message}"
+                                // 在注册失败时清空成功消息，确保只显示注册失败消息
+                                successMessage = ""
+                            }
+                        }
+                    }
+                }) {
+                    Text(text = "确认注册")
+                }
+
+// 根据条件显示文本
+                if (successMessage == "注册成功") {
+                    Text(text = successMessage, color = Color.Green)
+                } else if (errorMessage.isNotEmpty()) {
+                    Text(text = errorMessage, color = Color.Red)
+                }
+
+
             }
         }
     }
@@ -164,6 +249,24 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit) {
 
 
 
+@Composable
+fun RegisterScreen() {
+
+
+    var searchText by remember { mutableStateOf("") }
+
+    TextField(
+        value = searchText,
+        onValueChange = { newText ->
+            searchText = newText // 更新输入框的值
+        },
+        placeholder = { Text("搜索") },
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    )
+}
 
 @Composable
 fun HomeScreen(
@@ -194,9 +297,14 @@ fun HomeScreen(
 
 @Composable
 fun SearchBar() {
+    // 创建一个状态来存储输入框的值
+    var searchText by remember { mutableStateOf("") }
+
     TextField(
-        value = "",
-        onValueChange = {},
+        value = searchText,
+        onValueChange = { newText ->
+            searchText = newText // 更新输入框的值
+        },
         placeholder = { Text("搜索") },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         modifier = Modifier
@@ -204,6 +312,7 @@ fun SearchBar() {
             .padding(16.dp)
     )
 }
+
 
 @Composable
 fun HorizontalCardList(cards: List<CardData>, navController: NavHostController) {
@@ -374,6 +483,8 @@ fun ProfileScreen(
 
 
 
+
+
 @Composable
 fun BottomNavigationBar(selectedTab: Int, onTabSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
     NavigationBar(
@@ -427,6 +538,7 @@ fun BottomNavigationBar(selectedTab: Int, onTabSelected: (Int) -> Unit, modifier
     }
 }
 
+
 @Composable
 fun CardDetailScreen(card: CardData) {
     Column(
@@ -451,13 +563,8 @@ fun CardDetailScreen(card: CardData) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewMainScreen() {
-    ComposeTutorialTheme {
-        MainScreen(cards = cards)
-    }
-}
+
+
 @Preview(showBackground = true)
 @Composable
 fun PreviewProfileScreen() {
