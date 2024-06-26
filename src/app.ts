@@ -1,4 +1,5 @@
 import express, { Application, ErrorRequestHandler } from "express";
+import "express-async-errors";
 import bodyParser from "body-parser";
 import { ZodError } from "Zod";
 
