@@ -1,6 +1,7 @@
 import express, { Application, ErrorRequestHandler } from "express";
 import "express-async-errors";
 import cors from "cors";
+import morgan from "morgan";
 import bodyParser from "body-parser";
 import { ZodError } from "Zod";
 
@@ -18,6 +19,9 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerOptions = require("../swagger-options.json");
 const openapiSpec = swaggerJsdoc(swaggerOptions)
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(openapiSpec))
+
+// 配置日志（在此处设置，即意味着文档访问不计入日志）
+app.use(morgan("dev"))
 
 // 配置跨域
 app.use(cors())
