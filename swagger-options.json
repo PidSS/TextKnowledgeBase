@@ -4,7 +4,7 @@
         "openapi": "3.0.0",
         "info": {
             "title": "文本知识库 - 接口文档",
-            "version": "1.4.0",
+            "version": "1.5.0",
             "description": "这是文本知识库应用的后端接口文档。<br />为了便于 Kotlin 应用调用，所有通过 POST Data 上传数据的接口，都默认接受 JSON 格式。<br />网页上显示的所有的 Media Type 可选 $$ref，似乎都是 Swagger UI 的 bug 导致的，实际上并无此类型。"
         },
         "tags": [
