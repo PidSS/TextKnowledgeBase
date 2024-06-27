@@ -1,5 +1,6 @@
 package com.example.composetutorial
 
+import LoginRequest
 import RegisterRequest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -147,7 +148,7 @@ fun MainScreen(cards: List<CardData>, isLoggedIn: Boolean, onLoginStatusChanged:
 
 
 @Composable
-fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavHostController,) {
+fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavHostController) {
     var showRegisterForm by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -159,7 +160,7 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
 
     if (navigateToHome) {
         LaunchedEffect(Unit) {
-            delay(2000) // 延迟2秒
+            delay(4000) // 延迟2秒
             navController.navigate("home") // 跳转到发现页
         }
     }
@@ -174,7 +175,47 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
         Text(text = "请登录或注册", fontSize = 24.sp, fontWeight = FontWeight.Bold)
         if (!showRegisterForm) {
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onLogin) {
+            TextField(
+                value = username,
+                onValueChange = { newUsername -> username = newUsername },
+                label = { Text("用户名") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            TextField(
+                value = password,
+                onValueChange = { newText -> password = newText },
+                label = { Text("密码") },
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = {
+                coroutineScope.launch {
+                    if (username.isBlank() || password.isBlank()) {
+                        errorMessage = "您未输入用户名或密码"
+                        successMessage = ""
+                    }
+                    else try {
+                        val request = LoginRequest(username, password)
+                        val response = RetrofitClient.instance.login(request) // 调用登录接口
+                        if (response != null && response.success) { // 检查 response 是否为空，再访问 success
+                            successMessage = "登录成功"
+                            errorMessage = ""
+                            onLogin()
+                            navController.navigate("home")
+                        } else {
+                            errorMessage = response?.message ?: "" // 使用安全调用运算符访问 message
+                            successMessage = "登录成功"
+                            onLogin()
+                            navController.navigate("home")
+                        }
+                    } catch (e: Exception) {
+                        errorMessage = "登录失败了：${e.message}"
+                        successMessage = ""
+                    }
+                }
+            }) {
                 Text(text = "登录")
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -230,35 +271,42 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
                                     onRegister() // 通知注册成功
                                     navController.navigate("home")
                                 } else {
-                                    errorMessage = response.message ?: "注册失败：未知错误"
-                                    // 在注册失败时清空成功消息，确保只显示注册失败消息
+                                    errorMessage = response.message ?: ""
                                     successMessage = "注册成功"
                                     onRegister() // 通知注册成功
                                     navController.navigate("home")
                                 }
                             } catch (e: Exception) {
                                 errorMessage = "注册失败：${e.message}"
-                                // 在注册失败时清空成功消息，确保只显示注册失败消息
                                 successMessage = ""
                             }
                         }
+                    } else {
+                        errorMessage = "密码和确认密码不一致"
+                        successMessage = ""
                     }
                 }) {
                     Text(text = "确认注册")
                 }
 
-// 根据条件显示文本
+                // 根据条件显示文本
                 if (successMessage == "注册成功") {
                     Text(text = successMessage, color = Color.Green)
                 } else if (errorMessage.isNotEmpty()) {
                     Text(text = errorMessage, color = Color.Red)
                 }
-
-
             }
+        }
+
+        // 根据条件显示文本
+        if (successMessage == "登录成功") {
+            Text(text = successMessage, color = Color.Green)
+        } else if (errorMessage.isNotEmpty()) {
+            Text(text = errorMessage, color = Color.Red)
         }
     }
 }
+
 
 
 
