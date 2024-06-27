@@ -30,6 +30,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,6 +52,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.composetutorial.ui.theme.ComposeTutorialTheme
 import com.example.myapp.CardData
 import com.example.myapp.CardSampleData.cards
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
@@ -145,14 +147,22 @@ fun MainScreen(cards: List<CardData>, isLoggedIn: Boolean, onLoginStatusChanged:
 
 
 @Composable
-fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit) {
+fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavHostController,) {
     var showRegisterForm by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
     var successMessage by remember { mutableStateOf("") }
+    var navigateToHome by remember { mutableStateOf(false) } // 增加导航状态
     val coroutineScope = rememberCoroutineScope()
+
+    if (navigateToHome) {
+        LaunchedEffect(Unit) {
+            delay(2000) // 延迟2秒
+            navController.navigate("home") // 跳转到发现页
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -218,10 +228,13 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit) {
                                     successMessage = "注册成功"
                                     errorMessage = ""  // 清空错误消息
                                     onRegister() // 通知注册成功
+                                    navController.navigate("home")
                                 } else {
                                     errorMessage = response.message ?: "注册失败：未知错误"
                                     // 在注册失败时清空成功消息，确保只显示注册失败消息
                                     successMessage = "注册成功"
+                                    onRegister() // 通知注册成功
+                                    navController.navigate("home")
                                 }
                             } catch (e: Exception) {
                                 errorMessage = "注册失败：${e.message}"
@@ -249,24 +262,7 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit) {
 
 
 
-@Composable
-fun RegisterScreen() {
 
-
-    var searchText by remember { mutableStateOf("") }
-
-    TextField(
-        value = searchText,
-        onValueChange = { newText ->
-            searchText = newText // 更新输入框的值
-        },
-        placeholder = { Text("搜索") },
-        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    )
-}
 
 @Composable
 fun HomeScreen(
@@ -475,8 +471,9 @@ fun ProfileScreen(
     } else {
         // 未登录状态下显示的内容
         LoginScreen(
+            navController = navController, // 传递 navController
             onLogin = { onLoginStatusChanged(true) },
-            onRegister = { /* 处理注册逻辑 */ }
+            onRegister = { onLoginStatusChanged(true) } // 注册成功后也更新登录状态
         )
     }
 }
