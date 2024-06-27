@@ -57,7 +57,6 @@ const db = new PrismaClient();
  *         description: 未找到对应条目
  *         content:
  *           $ref: '#/components/schemas/Error'
- * 
  */
 router.get("/read/:id", (req, res) => {
     const id = z.number().parse(parseInt(req.params.id));

@@ -8,7 +8,7 @@
 import express, { Router } from "express";
 import { expressjwt } from "express-jwt";
 import { z } from "Zod";
-import { Prisma, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 const router: Router = express.Router();
 
@@ -114,8 +114,8 @@ router.post("/createEntry", async (req, res) => {
  *     responses:
  *       200:
  *         description: 成功删除知识条目
- *       400:
- *         description: 参数类型错误
+ *       404:
+ *         description: 无指定条目
  */
 router.post("/deleteEntry", async (req, res) => {
     try {
@@ -140,8 +140,8 @@ router.post("/deleteEntry", async (req, res) => {
         });
     } catch (e) {
         console.error(e);
-        res.status(500).json({
-            error: "服务器内部错误",
+        res.status(404).json({
+            error: "无指定条目",
         });
     }
 });
@@ -217,5 +217,67 @@ router.post("/updateEntry", async (req, res) => {
         });
     }
 });
+
+/**
+ * @openapi
+ *   /admin/listUsers:
+ *     get:
+ *       summary: 列出所有用户 <admin>
+ *       tags: [Admin]
+ *       security:
+ *         - bearerAuth: []
+ *       responses:
+ *         200:
+ *           description: 返回所有用户的信息
+ */
+router.get("/listUsers", async (req, res) => {
+    const users = await db.user.findMany()
+    res.json(users)
+})
+
+
+/**
+ * @openapi
+ * /admin/deleteUser:
+ *   post:
+ *     summary: 删除指定 ID 的用户 <admin>
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: 成功删除知识条目
+ *       404:
+ *         description: 无指定用户
+ */
+router.post("/deleteUser", (req, res) => {
+    const { id } = z.object({
+        id: z.number(),
+    }).parse(req.body);
+
+    db.user.delete({
+        where: { id }
+    })
+        .then( () => {
+            res.status(200).json({
+                message: "成功删除用户",
+            });
+        })
+        .catch( () => {
+            res.status(404).json({
+                error: "无对应用户"
+            })
+        })
+})
+
 
 export default router;
