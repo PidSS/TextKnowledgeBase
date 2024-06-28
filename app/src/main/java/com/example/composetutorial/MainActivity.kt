@@ -48,14 +48,12 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.composetutorial.ui.theme.ComposeTutorialTheme
 import com.example.myapp.CardData
 import com.example.myapp.CardSampleData.cards
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 
 class MainActivity : ComponentActivity() {
@@ -67,25 +65,18 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
-@Composable
-fun main() = runBlocking {
-    launch {
-        val currentContext = coroutineContext
-        println("Coroutine context: $currentContext")
-    }
-}
-
 @Composable
 fun MainActivityContent() {
     val navController = rememberNavController()
+    val userViewModel = remember { UserViewModel() }
     var isLoggedIn by remember { mutableStateOf(false) }
 
     ComposeTutorialTheme {
         MainScreen(
             cards = cards,
             isLoggedIn = isLoggedIn,
-            onLoginStatusChanged = { isLoggedIn = it }
+            onLoginStatusChanged = { isLoggedIn = it },
+            userViewModel = UserViewModel()
         )
     }
 }
@@ -95,24 +86,24 @@ fun MainActivityContent() {
 
 
 
+
 @Composable
-fun MainScreen(cards: List<CardData>, isLoggedIn: Boolean, onLoginStatusChanged: (Boolean) -> Unit) {
+fun MainScreen(
+    cards: List<CardData>,
+    isLoggedIn: Boolean,
+    onLoginStatusChanged: (Boolean) -> Unit,
+    userViewModel: UserViewModel // 接收 UserViewModel 实例
+) {
     val navController = rememberNavController()
     var selectedTab by remember { mutableStateOf(0) }
-
-    // Determine if the current route is the card detail screen
-    val currentBackStackEntry = navController.currentBackStackEntryAsState().value
-    val showBottomBar = currentBackStackEntry?.destination?.route != "details/{cardId}"
 
     Scaffold(
         topBar = { SearchBar() },
         bottomBar = {
-            if (showBottomBar) {
-                BottomNavigationBar(
-                    selectedTab = selectedTab,
-                    onTabSelected = { selectedTab = it }
-                )
-            }
+            BottomNavigationBar(
+                selectedTab = selectedTab,
+                onTabSelected = { selectedTab = it }
+            )
         }
     ) { innerPadding ->
         NavHost(
@@ -148,7 +139,7 @@ fun MainScreen(cards: List<CardData>, isLoggedIn: Boolean, onLoginStatusChanged:
                     navController = navController,
                     isLoggedIn = isLoggedIn,
                     onLoginStatusChanged = onLoginStatusChanged,
-                    userViewModel= UserViewModel()
+                    userViewModel = userViewModel
                 )
             }
         }
@@ -158,12 +149,14 @@ fun MainScreen(cards: List<CardData>, isLoggedIn: Boolean, onLoginStatusChanged:
 
 
 
+
 @Composable
 fun LoginScreen(
     onLogin: () -> Unit,
     onRegister: () -> Unit,
     navController: NavHostController,
-    userViewModel: UserViewModel // 传入 UserViewModel
+    userViewModel: UserViewModel, // 接收 UserViewModel 实例
+    onLoginStatusChanged: (Boolean) -> Unit
 ) {
     var showRegisterForm by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("") }
@@ -226,7 +219,8 @@ fun LoginScreen(
                                 errorMessage = ""
                                 println("登录成功，令牌: $token")
                                 userViewModel.login(username) // 调用 UserViewModel 的 login 方法
-                                onLogin
+                                println("登录成功，用户名为：$username")
+                                onLoginStatusChanged(true) // 更新登录状态
                                 navigateToHome = true
                             } else {
                                 errorMessage = "登录失败，未返回有效响应"
@@ -329,10 +323,6 @@ fun LoginScreen(
         }
     }
 }
-
-
-
-
 
 
 
@@ -485,22 +475,74 @@ fun ProfileScreen(
 ) {
     if (isLoggedIn) {
         // 已登录状态下显示的内容
-        ProfileScreen(
-            cards = cards,
-            selectedTab = selectedTab,
-            onTabSelected = onTabSelected,
-            navController = navController,
-            isLoggedIn = isLoggedIn,
-            onLoginStatusChanged = onLoginStatusChanged,
-            userViewModel= UserViewModel()
-        )
-    } else {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "用户名: ${userViewModel.username}",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+            if (userViewModel.username.isEmpty()) {
+                Text(
+                    text = "用户名为空",
+                    color = Color.Red
+                )
+            } else {
+                Text(
+                    text = "用户名不为空，用户名为: ${userViewModel.username}",
+                    color = Color.Green
+                )
+            }
+            Text(
+                text = "浏览历史",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(cards) { card ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .clickable {
+                                navController.navigate("details/${card.id}")
+                            }
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Text(
+                                text = card.title,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = card.description,
+                                fontSize = 16.sp,
+                                color = Color.Black
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }  else {
         // 未登录状态下显示的内容
         LoginScreen(
             navController = navController,
             onLogin = { onLoginStatusChanged(true) },
             onRegister = { onLoginStatusChanged(true) },
-            userViewModel = userViewModel // 传入 UserViewModel 实例
+            userViewModel = userViewModel ,// 传入 UserViewModel 实例
+            onLoginStatusChanged = onLoginStatusChanged
         )
     }
 }
