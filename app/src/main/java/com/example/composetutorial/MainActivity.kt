@@ -77,10 +77,8 @@ fun MainActivityContent() {
         MainScreen(
             cards = cards,
             isLoggedIn = userViewModel.isLoggedIn,
-            onLoginStatusChanged = { isLoggedIn ->
+            onLoginStatusChanged = { isLoggedIn, username ->
                 if (isLoggedIn) {
-                    // 在这里获取用户名，并传递给 ViewModel 的 login 方法
-                    val username = "your_username_here" // 从登录成功后的地方获取用户名
                     userViewModel.login(username)
                 } else {
                     userViewModel.logout() // 可选的，根据需要调用
@@ -103,7 +101,7 @@ fun MainActivityContent() {
 fun MainScreen(
     cards: List<CardData>,
     isLoggedIn: Boolean,
-    onLoginStatusChanged: (Boolean) -> Unit,
+    onLoginStatusChanged: (Boolean, String) -> Unit,
     userViewModel: UserViewModel // 接收 UserViewModel 实例
 ) {
     val navController = rememberNavController()
@@ -162,13 +160,14 @@ fun MainScreen(
 
 
 
+
 @Composable
 fun LoginScreen(
-    onLogin: () -> Unit,
+    onLogin: (String) -> Unit,
     onRegister: () -> Unit,
     navController: NavHostController,
     userViewModel: UserViewModel, // 接收 UserViewModel 实例
-    onLoginStatusChanged: (Boolean) -> Unit
+    onLoginStatusChanged: (Boolean, String) -> Unit
 ) {
     var showRegisterForm by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("") }
@@ -232,7 +231,7 @@ fun LoginScreen(
                                 println("登录成功，令牌: $token")
                                 userViewModel.login(username) // 调用 UserViewModel 的 login 方法
                                 println("登录成功，用户名为：$username")
-                                onLoginStatusChanged(true) // 更新登录状态
+                                onLoginStatusChanged(true, username) // 更新登录状态并传递用户名
                                 navigateToHome = true
                             } else {
                                 errorMessage = "登录失败，未返回有效响应"
@@ -339,6 +338,7 @@ fun LoginScreen(
 
 
 
+
 @Composable
 fun HomeScreen(
     cards: List<CardData>,
@@ -346,7 +346,7 @@ fun HomeScreen(
     onTabSelected: (Int) -> Unit,
     navController: NavHostController,
     isLoggedIn: Boolean,
-    onLoginStatusChanged: (Boolean) -> Unit
+    onLoginStatusChanged: (Boolean, String) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         when (selectedTab) {
@@ -359,11 +359,12 @@ fun HomeScreen(
                 navController = navController,
                 isLoggedIn = isLoggedIn,
                 onLoginStatusChanged = onLoginStatusChanged,
-                userViewModel= UserViewModel()
+                userViewModel = UserViewModel()
             )
         }
     }
 }
+
 
 
 
@@ -482,7 +483,7 @@ fun ProfileScreen(
     onTabSelected: (Int) -> Unit,
     navController: NavHostController,
     isLoggedIn: Boolean,
-    onLoginStatusChanged: (Boolean) -> Unit,
+    onLoginStatusChanged: (Boolean, String) -> Unit,
     userViewModel: UserViewModel // 接收 UserViewModel 实例
 ) {
     if (isLoggedIn) {
@@ -547,17 +548,18 @@ fun ProfileScreen(
                 }
             }
         }
-    }  else {
+    } else {
         // 未登录状态下显示的内容
         LoginScreen(
             navController = navController,
-            onLogin = { onLoginStatusChanged(true) },
-            onRegister = { onLoginStatusChanged(true) },
-            userViewModel = userViewModel ,// 传入 UserViewModel 实例
+            onLogin = { username -> onLoginStatusChanged(true, username) },
+            onRegister = { onLoginStatusChanged(true, "") },
+            userViewModel = userViewModel, // 传入 UserViewModel 实例
             onLoginStatusChanged = onLoginStatusChanged
         )
     }
 }
+
 
 
 
