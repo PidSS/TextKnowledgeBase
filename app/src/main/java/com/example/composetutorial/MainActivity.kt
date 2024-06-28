@@ -2,6 +2,7 @@ package com.example.composetutorial
 
 import LoginRequest
 import RegisterRequest
+import UserViewModel
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -43,7 +43,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -148,7 +147,8 @@ fun MainScreen(cards: List<CardData>, isLoggedIn: Boolean, onLoginStatusChanged:
                     onTabSelected = { selectedTab = it },
                     navController = navController,
                     isLoggedIn = isLoggedIn,
-                    onLoginStatusChanged = onLoginStatusChanged
+                    onLoginStatusChanged = onLoginStatusChanged,
+                    userViewModel= UserViewModel()
                 )
             }
         }
@@ -159,21 +159,26 @@ fun MainScreen(cards: List<CardData>, isLoggedIn: Boolean, onLoginStatusChanged:
 
 
 @Composable
-fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavHostController) {
+fun LoginScreen(
+    onLogin: () -> Unit,
+    onRegister: () -> Unit,
+    navController: NavHostController,
+    userViewModel: UserViewModel // 传入 UserViewModel
+) {
     var showRegisterForm by remember { mutableStateOf(false) }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
     var successMessage by remember { mutableStateOf("") }
-    var navigateToHome by remember { mutableStateOf(false) } // 增加导航状态
+    var navigateToHome by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
     if (navigateToHome) {
         LaunchedEffect(Unit) {
-            delay(2000) // 延迟2秒
-            navController.navigate("home") // 跳转到发现页
+            delay(2000)
+            navController.navigate("home")
         }
     }
 
@@ -215,13 +220,13 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
                             println("登录响应：$response")
 
                             if (response.token.isNotEmpty()) {
-                                // 登录成功，获取并存储令牌
                                 val token = response.token
                                 saveToken(context, token)
                                 successMessage = "登录成功，令牌: $token"
                                 errorMessage = ""
                                 println("登录成功，令牌: $token")
-                                onRegister()
+                                userViewModel.login(username) // 调用 UserViewModel 的 login 方法
+                                onLogin
                                 navigateToHome = true
                             } else {
                                 errorMessage = "登录失败，未返回有效响应"
@@ -229,7 +234,6 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
                                 println("登录失败，未返回有效响应")
                             }
                         } catch (e: Exception) {
-                            // 捕获并显示异常信息
                             errorMessage = "登录失败: ${e.message}"
                             successMessage = ""
                             println("登录失败: ${e.message}")
@@ -287,15 +291,14 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
                                 val request = RegisterRequest(username, password)
                                 val response = RetrofitClient.instance.register(request)
                                 if (response.success) {
-                                    // 确认注册成功后更新状态
                                     successMessage = "注册成功"
-                                    errorMessage = ""  // 清空错误消息
-                                    onRegister() // 通知注册成功
+                                    errorMessage = ""
+                                    onRegister()
                                     navController.navigate("home")
                                 } else {
                                     errorMessage = response.message ?: ""
                                     successMessage = "注册成功"
-                                    onRegister() // 通知注册成功
+                                    onRegister()
                                     navController.navigate("home")
                                 }
                             } catch (e: Exception) {
@@ -311,7 +314,6 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
                     Text(text = "确认注册")
                 }
 
-                // 根据条件显示文本
                 if (successMessage.isNotEmpty()) {
                     Text(text = successMessage, color = Color.Green)
                 } else if (errorMessage.isNotEmpty()) {
@@ -320,7 +322,6 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
             }
         }
 
-        // 根据条件显示文本
         if (successMessage.isNotEmpty()) {
             Text(text = successMessage, color = Color.Green)
         } else if (errorMessage.isNotEmpty()) {
@@ -328,6 +329,7 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
         }
     }
 }
+
 
 
 
@@ -354,7 +356,8 @@ fun HomeScreen(
                 onTabSelected = onTabSelected,
                 navController = navController,
                 isLoggedIn = isLoggedIn,
-                onLoginStatusChanged = onLoginStatusChanged
+                onLoginStatusChanged = onLoginStatusChanged,
+                userViewModel= UserViewModel()
             )
         }
     }
@@ -477,74 +480,27 @@ fun ProfileScreen(
     onTabSelected: (Int) -> Unit,
     navController: NavHostController,
     isLoggedIn: Boolean,
-    onLoginStatusChanged: (Boolean) -> Unit
+    onLoginStatusChanged: (Boolean) -> Unit,
+    userViewModel: UserViewModel // 接收 UserViewModel 实例
 ) {
     if (isLoggedIn) {
         // 已登录状态下显示的内容
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = null,
-                modifier = Modifier.size(100.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "用户名",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "浏览记录",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(cards) { card ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                            .clickable {
-                                navController.navigate("details/${card.id}")
-                            }
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .padding(16.dp)
-                        ) {
-                            Text(
-                                text = card.title,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = card.description,
-                                fontSize = 16.sp,
-                                color = Color.Black
-                            )
-                        }
-                    }
-                }
-            }
-        }
+        ProfileScreen(
+            cards = cards,
+            selectedTab = selectedTab,
+            onTabSelected = onTabSelected,
+            navController = navController,
+            isLoggedIn = isLoggedIn,
+            onLoginStatusChanged = onLoginStatusChanged,
+            userViewModel= UserViewModel()
+        )
     } else {
         // 未登录状态下显示的内容
         LoginScreen(
-            navController = navController, // 传递 navController
+            navController = navController,
             onLogin = { onLoginStatusChanged(true) },
-            onRegister = { onLoginStatusChanged(true) } // 注册成功后也更新登录状态
+            onRegister = { onLoginStatusChanged(true) },
+            userViewModel = userViewModel // 传入 UserViewModel 实例
         )
     }
 }
@@ -633,42 +589,3 @@ fun CardDetailScreen(card: CardData) {
 
 
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewProfileScreen() {
-    ComposeTutorialTheme {
-        val navController = rememberNavController() // 创建一个模拟的 NavController
-        ProfileScreen(
-            cards = cards,
-            selectedTab = 2,
-            onTabSelected = {},
-            navController = navController,
-            isLoggedIn = false, // 添加登录状态参数
-            onLoginStatusChanged = {} // 添加处理登录状态变化的参数
-        )
-    }
-}
-
-
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewFavoriteScreen() {
-    ComposeTutorialTheme {
-        val navController = rememberNavController() // 创建一个模拟的NavController
-        FavoriteScreen(navController = navController, cards = cards) // 提供所需参数
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewCardDetailScreen() {
-    val sampleCard = CardData(
-        id = "1",
-        title = "SQL注入",
-        description = "SQL注入是一种通过在输入字段中插入恶意SQL代码来攻击应用程序的技术。"
-    )
-    ComposeTutorialTheme {
-        CardDetailScreen(card = sampleCard)
-    }
-}
