@@ -172,7 +172,7 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
 
     if (navigateToHome) {
         LaunchedEffect(Unit) {
-            delay(4000) // 延迟2秒
+            delay(2000) // 延迟2秒
             navController.navigate("home") // 跳转到发现页
         }
     }
@@ -210,7 +210,10 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
                     } else {
                         try {
                             val request = LoginRequest(username, password)
+                            println("登录请求：$request")
                             val response = RetrofitClient.instance.login(request)
+                            println("登录响应：$response")
+
                             if (response.token.isNotEmpty()) {
                                 // 登录成功，获取并存储令牌
                                 val token = response.token
@@ -218,11 +221,12 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
                                 successMessage = "登录成功，令牌: $token"
                                 errorMessage = ""
                                 println("登录成功，令牌: $token")
-                                //onRegister() // 通知注册成功
-                                //navController.navigate("home")
+                                onRegister()
+                                navigateToHome = true
                             } else {
                                 errorMessage = "登录失败，未返回有效响应"
                                 successMessage = ""
+                                println("登录失败，未返回有效响应")
                             }
                         } catch (e: Exception) {
                             // 捕获并显示异常信息
@@ -308,7 +312,7 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
                 }
 
                 // 根据条件显示文本
-                if (successMessage == "注册成功") {
+                if (successMessage.isNotEmpty()) {
                     Text(text = successMessage, color = Color.Green)
                 } else if (errorMessage.isNotEmpty()) {
                     Text(text = errorMessage, color = Color.Red)
@@ -317,13 +321,14 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
         }
 
         // 根据条件显示文本
-        if (successMessage == "登录成功") {
+        if (successMessage.isNotEmpty()) {
             Text(text = successMessage, color = Color.Green)
         } else if (errorMessage.isNotEmpty()) {
             Text(text = errorMessage, color = Color.Red)
         }
     }
 }
+
 
 
 
