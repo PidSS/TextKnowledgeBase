@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -485,7 +486,10 @@ fun ProfileScreen(
     onLoginStatusChanged: (Boolean) -> Unit,
     userViewModel: UserViewModel // 接收 UserViewModel 实例
 ) {
-    if (isLoggedIn) {
+    val isLoggedInState by remember { derivedStateOf { userViewModel.isLoggedIn } }
+    val usernameState by remember { derivedStateOf { userViewModel.username } }
+
+    if (isLoggedInState) {
         // 已登录状态下显示的内容
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -493,19 +497,19 @@ fun ProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "用户名: ${userViewModel.username}",
+                text = "用户名: $usernameState",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(vertical = 16.dp)
             )
-            if (userViewModel.username.isEmpty()) {
+            if (usernameState.isEmpty()) {
                 Text(
                     text = "用户名为空",
                     color = Color.Red
                 )
             } else {
                 Text(
-                    text = "用户名不为空，用户名为: ${userViewModel.username}",
+                    text = "用户名不为空，用户名为: $usernameState",
                     color = Color.Green
                 )
             }
@@ -547,17 +551,19 @@ fun ProfileScreen(
                 }
             }
         }
-    }  else {
+    } else {
         // 未登录状态下显示的内容
         LoginScreen(
             navController = navController,
             onLogin = { onLoginStatusChanged(true) },
             onRegister = { onLoginStatusChanged(true) },
-            userViewModel = userViewModel ,// 传入 UserViewModel 实例
+            userViewModel = userViewModel, // 传入 UserViewModel 实例
             onLoginStatusChanged = onLoginStatusChanged
         )
     }
 }
+
+
 
 
 
