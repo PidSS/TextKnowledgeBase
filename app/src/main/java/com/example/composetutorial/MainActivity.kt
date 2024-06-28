@@ -59,7 +59,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,7 +89,9 @@ fun MainActivityContent() {
                     userViewModel.logout() // 可选的，根据需要调用
                 }
             },
-            userViewModel = userViewModel
+            userViewModel = userViewModel,
+            entryViewModel = EntryViewModel()
+
         )
     }
 }
@@ -108,7 +109,8 @@ fun MainScreen(
     cards: List<CardData>,
     isLoggedIn: Boolean,
     onLoginStatusChanged: (Boolean) -> Unit,
-    userViewModel: UserViewModel // 接收 UserViewModel 实例
+    userViewModel: UserViewModel, // 接收 UserViewModel 实例
+    entryViewModel: EntryViewModel
 ) {
     val navController = rememberNavController()
     var selectedTab by remember { mutableStateOf(0) }
@@ -138,12 +140,16 @@ fun MainScreen(
                 )
             }
             composable("details/{cardId}") { backStackEntry ->
-                val cardId = backStackEntry.arguments?.getString("cardId")
-                val card = cards.find { it.id == cardId }
-                if (card != null) {
-                    CardDetailScreen(card = card)
+                val cardId = backStackEntry.arguments?.getString("cardId")?.toInt()
+                val entries by entryViewModel.entries.observeAsState(emptyList())
+                val entry = entries.find { it.id == cardId }
+
+                if (entry != null) {
+                    CardDetailScreen(entry = entry)
                 }
             }
+
+
             composable("favorites") {
                 FavoriteScreen(cards = cards, navController = navController)
             }
@@ -417,7 +423,9 @@ fun HorizontalCardList(entries: List<Entry>, navController: NavHostController) {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = entry.introduction,
+                        text = entry.introduction.take(40).let {
+                            if (entry.introduction.length > 40) "$it..." else it
+                        },
                         fontSize = 16.sp,
                         color = Color.Black
                     )
@@ -624,7 +632,7 @@ fun BottomNavigationBar(selectedTab: Int, onTabSelected: (Int) -> Unit, modifier
 
 
 @Composable
-fun CardDetailScreen(card: CardData) {
+fun CardDetailScreen(entry: Entry) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -633,19 +641,25 @@ fun CardDetailScreen(card: CardData) {
         horizontalAlignment = Alignment.Start
     ) {
         Text(
-            text = card.title,
+            text = entry.name,
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = card.description,
+            text = entry.introduction,
             fontSize = 16.sp,
             color = Color.Black
         )
-        // 在这里添加更多详细内容
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = entry.content,
+            fontSize = 16.sp,
+            color = Color.Black
+        )
     }
 }
+
 
 
 
