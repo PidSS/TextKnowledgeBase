@@ -16,7 +16,7 @@ data class LoginResponse(
     val collections: List<Any>, // 假设 collections 是一个列表
     val admin: Boolean,
     val feedbacks: List<Any>, // 假设 feedbacks 是一个列表
-    val token: String
+    val token: String,
 )
 
 

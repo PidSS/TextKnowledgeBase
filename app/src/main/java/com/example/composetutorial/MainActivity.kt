@@ -207,24 +207,35 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
                     if (username.isBlank() || password.isBlank()) {
                         errorMessage = "您未输入用户名或密码"
                         successMessage = ""
-                    }
-                    else try {
-                        val request = LoginRequest(username, password)
-                        val response = RetrofitClient.instance.login(request)
-                        if (response != null && response.id != null) {
-                            // 登录成功，获取并存储令牌
-                            val token = response.token
-                            saveToken(context, token)
-                            println("登录成功，令牌: $token")
+                    } else {
+                        try {
+                            val request = LoginRequest(username, password)
+                            val response = RetrofitClient.instance.login(request)
+                            if (response.token.isNotEmpty()) {
+                                // 登录成功，获取并存储令牌
+                                val token = response.token
+                                saveToken(context, token)
+                                successMessage = "登录成功，令牌: $token"
+                                errorMessage = ""
+                                println("登录成功，令牌: $token")
+                                //onRegister() // 通知注册成功
+                                //navController.navigate("home")
+                            } else {
+                                errorMessage = "登录失败，未返回有效响应"
+                                successMessage = ""
+                            }
+                        } catch (e: Exception) {
+                            // 捕获并显示异常信息
+                            errorMessage = "登录失败: ${e.message}"
+                            successMessage = ""
+                            println("登录失败: ${e.message}")
                         }
-                    }catch (e: Exception) {
-                        // 捕获并显示异常信息
-                        println("登录失败: ${e.message}")
                     }
                 }
             }) {
                 Text("登录")
             }
+
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = { showRegisterForm = true }) {
                 Text(text = "注册")
