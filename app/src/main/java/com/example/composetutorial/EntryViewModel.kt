@@ -21,5 +21,12 @@ class EntryViewModel: ViewModel() {
             _entries.value = entries
         }
     }
+
+    fun toggleFavorite(entry: Entry) {
+        val updatedEntries = _entries.value?.map {
+            if (it.id == entry.id) it.copy(isFavorite = !it.isFavorite) else it
+        } ?: emptyList()
+        _entries.value = updatedEntries
+    }
 }
 

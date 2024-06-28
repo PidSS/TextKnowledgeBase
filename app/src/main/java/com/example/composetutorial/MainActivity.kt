@@ -19,13 +19,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -155,6 +160,7 @@ fun MainScreen(
                 FavoriteScreen(entries=entries, navController = navController)
             }
             composable("profile") {
+                val entries by entryViewModel.entries.observeAsState(emptyList())
                 ProfileScreen(
                     cards = cards,
                     selectedTab = selectedTab,
@@ -162,7 +168,8 @@ fun MainScreen(
                     navController = navController,
                     isLoggedIn = isLoggedIn,
                     onLoginStatusChanged = onLoginStatusChanged,
-                    userViewModel = userViewModel
+                    userViewModel = userViewModel,
+                    entries=entries
                 )
             }
         }
@@ -370,7 +377,8 @@ fun HomeScreen(
                 navController = navController,
                 isLoggedIn = isLoggedIn,
                 onLoginStatusChanged = onLoginStatusChanged,
-                userViewModel= UserViewModel()
+                userViewModel= UserViewModel(),
+                entries=entries
             )
         }
     }
@@ -486,6 +494,7 @@ fun ProfileScreen(
     navController: NavHostController,
     isLoggedIn: Boolean,
     onLoginStatusChanged: (Boolean) -> Unit,
+    entries: List<Entry>,
     userViewModel: UserViewModel // 接收 UserViewModel 实例
 ) {
     if (isLoggedIn) {
@@ -516,32 +525,36 @@ fun ProfileScreen(
                 text = "浏览历史",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 16.dp)
+                modifier = Modifier.padding(vertical = 10.dp)
             )
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier
+                    .padding(top = 75.dp, start = 16.dp, end = 16.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                items(cards) { card ->
+                items(entries) { entry ->
                     Card(
                         modifier = Modifier
+                            .padding(8.dp)
                             .fillMaxWidth()
                             .wrapContentHeight()
-                            .clickable {
-                                navController.navigate("details/${card.id}")
-                            }
+                            .clickable { navController.navigate("details/${entry.id}") }
                     ) {
                         Column(
-                            modifier = Modifier.padding(16.dp)
+                            modifier = Modifier
+                                .padding(16.dp)
                         ) {
                             Text(
-                                text = card.title,
+                                text = entry.name,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = card.description,
+                                text = entry.introduction.take(40).let {
+                                    if (entry.introduction.length > 40) "$it..." else it
+                                },
                                 fontSize = 16.sp,
                                 color = Color.Black
                             )
@@ -624,12 +637,12 @@ fun BottomNavigationBar(selectedTab: Int, onTabSelected: (Int) -> Unit, modifier
 
 @Composable
 fun CardDetailScreen(entry: Entry) {
+    val entryViewModel=EntryViewModel()
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.Start
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
     ) {
         Text(
             text = entry.name,
@@ -648,6 +661,14 @@ fun CardDetailScreen(entry: Entry) {
             fontSize = 16.sp,
             color = Color.Black
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        IconButton(onClick = { entryViewModel.toggleFavorite(entry) }) {
+            if (entry.isFavorite) {
+                Icon(Icons.Default.Star, contentDescription = "Unfavorite", tint = Color.Yellow)
+            } else {
+                Icon(Icons.Default.StarBorder, contentDescription = "Favorite", tint = Color.Gray)
+            }
+        }
     }
 }
 

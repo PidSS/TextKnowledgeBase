@@ -21,7 +21,8 @@ data class Entry(
     val id: Int,
     val name: String,
     val introduction: String,
-    val content: String
+    val content: String,
+    var isFavorite: Boolean = false
 )
 
 
