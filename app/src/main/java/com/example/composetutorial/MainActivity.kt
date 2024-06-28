@@ -119,14 +119,17 @@ fun MainScreen(
 ) {
     val navController = rememberNavController()
     var selectedTab by remember { mutableStateOf(0) }
+    var showBottomBar by remember { mutableStateOf(true) }
 
     Scaffold(
         topBar = { SearchBar() },
         bottomBar = {
-            BottomNavigationBar(
-                selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it }
-            )
+            if (showBottomBar) {
+                BottomNavigationBar(
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it }
+                )
+            }
         }
     ) { innerPadding ->
         NavHost(
@@ -135,6 +138,7 @@ fun MainScreen(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") {
+                showBottomBar = true
                 HomeScreen(
                     cards = cards,
                     selectedTab = selectedTab,
@@ -145,6 +149,7 @@ fun MainScreen(
                 )
             }
             composable("details/{cardId}") { backStackEntry ->
+                showBottomBar = false
                 val cardId = backStackEntry.arguments?.getString("cardId")?.toInt()
                 val entries by entryViewModel.entries.observeAsState(emptyList())
                 val entry = entries.find { it.id == cardId }
@@ -153,13 +158,13 @@ fun MainScreen(
                     CardDetailScreen(entry = entry)
                 }
             }
-
-
             composable("favorites") {
+                showBottomBar = true
                 val entries by entryViewModel.entries.observeAsState(emptyList())
                 FavoriteScreen(entries=entries, navController = navController)
             }
             composable("profile") {
+                showBottomBar = true
                 val entries by entryViewModel.entries.observeAsState(emptyList())
                 ProfileScreen(
                     cards = cards,
@@ -169,12 +174,13 @@ fun MainScreen(
                     isLoggedIn = isLoggedIn,
                     onLoginStatusChanged = onLoginStatusChanged,
                     userViewModel = userViewModel,
-                    entries=entries
+                    entries = entries
                 )
             }
         }
     }
 }
+
 
 
 
