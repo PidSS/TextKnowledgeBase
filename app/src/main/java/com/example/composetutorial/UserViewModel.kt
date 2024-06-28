@@ -13,7 +13,7 @@ class UserViewModel : ViewModel() {
     fun login(username: String) {
         viewModelScope.launch {
             _username.value = username
-            println("登录成功，Usernamee: $username")
+            //println("登录成功，Usernamee: $username")
             _isLoggedIn.value = true
         }
     }

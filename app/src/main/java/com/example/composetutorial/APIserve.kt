@@ -1,9 +1,7 @@
 
 import retrofit2.http.Body
 import retrofit2.http.GET
-import retrofit2.http.Header
 import retrofit2.http.POST
-import java.security.KeyStore
 
 data class LoginRequest(val name: String, val password: String)
 data class RegisterRequest(val name: String, val password: String)
@@ -19,6 +17,14 @@ data class LoginResponse(
     val token: String,
 )
 
+data class Entry(
+    val id: Int,
+    val name: String,
+    val introduction: String,
+    val content: String
+)
+
+
 
 interface ApiService {
     @POST("user/login")
@@ -27,8 +33,9 @@ interface ApiService {
     @POST("user/register")
     suspend fun register(@Body request: RegisterRequest): RegisterResponse
 
-    @GET("entries")
-    suspend fun getEntries(@Header("Authorization") token: String): List<KeyStore.Entry>
+    @GET("entry/list")
+    suspend fun getEntries(): List<Entry>
+
 }
 
 

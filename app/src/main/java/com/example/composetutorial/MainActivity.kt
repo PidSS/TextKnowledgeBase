@@ -1,5 +1,6 @@
 package com.example.composetutorial
 
+import Entry
 import LoginRequest
 import RegisterRequest
 import UserViewModel
@@ -33,6 +34,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -45,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -54,6 +57,7 @@ import com.example.myapp.CardData
 import com.example.myapp.CardSampleData.cards
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
 
 
 class MainActivity : ComponentActivity() {
@@ -157,8 +161,6 @@ fun MainScreen(
         }
     }
 }
-
-
 
 
 
@@ -348,9 +350,11 @@ fun HomeScreen(
     isLoggedIn: Boolean,
     onLoginStatusChanged: (Boolean) -> Unit
 ) {
+    val entryViewModel: EntryViewModel = viewModel()
+    val entries by entryViewModel.entries.observeAsState(emptyList())
     Box(modifier = Modifier.fillMaxSize()) {
         when (selectedTab) {
-            0 -> HorizontalCardList(cards = cards, navController = navController)
+            0 -> HorizontalCardList(entries = entries, navController = navController)
             1 -> FavoriteScreen(cards = cards, navController = navController)
             2 -> ProfileScreen(
                 cards = cards,
@@ -387,33 +391,33 @@ fun SearchBar() {
 
 
 @Composable
-fun HorizontalCardList(cards: List<CardData>, navController: NavHostController) {
+fun HorizontalCardList(entries: List<Entry>, navController: NavHostController) {
     LazyColumn(
         modifier = Modifier
             .padding(top = 75.dp, start = 16.dp, end = 16.dp)
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
-        items(cards) { card ->
+        items(entries) { entry ->
             Card(
                 modifier = Modifier
                     .padding(8.dp)
                     .fillMaxWidth()
                     .wrapContentHeight()
-                    .clickable { navController.navigate("details/${card.id}") }
+                    .clickable { navController.navigate("details/${entry.id}") }
             ) {
                 Column(
                     modifier = Modifier
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = card.title,
+                        text = entry.name,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = card.description,
+                        text = entry.introduction,
                         fontSize = 16.sp,
                         color = Color.Black
                     )
