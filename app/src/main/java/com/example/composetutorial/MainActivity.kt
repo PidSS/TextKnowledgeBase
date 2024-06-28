@@ -115,9 +115,16 @@ fun MainScreen(
     val navController = rememberNavController()
     var selectedTab by remember { mutableStateOf(0) }
     var showBottomBar by remember { mutableStateOf(true) }
+    val entries by entryViewModel.entries.observeAsState(emptyList())
+    var searchText by remember { mutableStateOf("") }
+
+    val filteredCards = entries.filter {
+        it.name.contains(searchText, ignoreCase = true) ||
+                it.introduction.contains(searchText, ignoreCase = true)
+    }
 
     Scaffold(
-        topBar = { SearchBar() },
+        topBar = { SearchBar(onSearchTextChange = { searchText = it }) },
         bottomBar = {
             if (showBottomBar) {
                 BottomNavigationBar(
@@ -363,9 +370,16 @@ fun HomeScreen(
     isLoggedIn: Boolean,
     onLoginStatusChanged: (Boolean) -> Unit
 ) {
+    var searchText by remember { mutableStateOf("") }
     val entryViewModel: EntryViewModel = viewModel()
     val entries by entryViewModel.entries.observeAsState(emptyList())
     Box(modifier = Modifier.fillMaxSize()) {
+        val filteredCards = entries.filter {
+            it.name.contains(searchText, ignoreCase = true) ||
+                    it.introduction.contains(searchText, ignoreCase = true)
+        }
+        // 使用过滤后的卡片列表
+        HorizontalCardList(entries = filteredCards, navController = navController)
         when (selectedTab) {
             0 -> HorizontalCardList(entries = entries, navController = navController)
             1 -> FavoriteScreen(entries = entries, navController = navController)
@@ -385,7 +399,7 @@ fun HomeScreen(
 
 
 @Composable
-fun SearchBar() {
+fun SearchBar(onSearchTextChange: (String) -> Unit) {
     // 创建一个状态来存储输入框的值
     var searchText by remember { mutableStateOf("") }
 
@@ -393,6 +407,7 @@ fun SearchBar() {
         value = searchText,
         onValueChange = { newText ->
             searchText = newText // 更新输入框的值
+            onSearchTextChange(newText) // 调用回调函数
         },
         placeholder = { Text("搜索") },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
