@@ -114,14 +114,17 @@ fun MainScreen(
 ) {
     val navController = rememberNavController()
     var selectedTab by remember { mutableStateOf(0) }
+    var showBottomBar by remember { mutableStateOf(true) }
 
     Scaffold(
         topBar = { SearchBar() },
         bottomBar = {
-            BottomNavigationBar(
-                selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it }
-            )
+            if (showBottomBar) {
+                BottomNavigationBar(
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it }
+                )
+            }
         }
     ) { innerPadding ->
         NavHost(
@@ -130,6 +133,7 @@ fun MainScreen(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") {
+                showBottomBar = true
                 HomeScreen(
                     cards = cards,
                     selectedTab = selectedTab,
@@ -140,6 +144,7 @@ fun MainScreen(
                 )
             }
             composable("details/{cardId}") { backStackEntry ->
+                showBottomBar = false
                 val cardId = backStackEntry.arguments?.getString("cardId")?.toInt()
                 val entries by entryViewModel.entries.observeAsState(emptyList())
                 val entry = entries.find { it.id == cardId }
@@ -148,12 +153,13 @@ fun MainScreen(
                     CardDetailScreen(entry = entry)
                 }
             }
-
-
             composable("favorites") {
-                FavoriteScreen(cards = cards, navController = navController)
+                showBottomBar = true
+                val entries by entryViewModel.entries.observeAsState(emptyList())
+                FavoriteScreen(entries = entries, navController = navController)
             }
             composable("profile") {
+                showBottomBar = true
                 ProfileScreen(
                     cards = cards,
                     selectedTab = selectedTab,
@@ -167,6 +173,7 @@ fun MainScreen(
         }
     }
 }
+
 
 
 
@@ -361,7 +368,7 @@ fun HomeScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         when (selectedTab) {
             0 -> HorizontalCardList(entries = entries, navController = navController)
-            1 -> FavoriteScreen(cards = cards, navController = navController)
+            1 -> FavoriteScreen(entries = entries, navController = navController)
             2 -> ProfileScreen(
                 cards = cards,
                 selectedTab = selectedTab,
@@ -436,49 +443,39 @@ fun HorizontalCardList(entries: List<Entry>, navController: NavHostController) {
 }
 
 @Composable
-fun FavoriteScreen(cards: List<CardData>, navController: NavHostController) {
-    Column(
+fun FavoriteScreen(entries: List<Entry>, navController: NavHostController) {
+    val limitedEntries = entries.take(3)
+    LazyColumn(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(top = 75.dp, start = 16.dp, end = 16.dp)
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
-        Text(
-            text = "收藏",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(cards) { card ->
-                Card(
+        items(limitedEntries) { entry ->
+            Card(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .clickable { navController.navigate("details/${entry.id}") }
+            ) {
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .clickable {
-                            navController.navigate("details/${card.id}")
-                        }
+                        .padding(16.dp)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(16.dp)
-                    ) {
-                        Text(
-                            text = card.title,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = card.description,
-                            fontSize = 16.sp,
-                            color = Color.Black
-                        )
-                    }
+                    Text(
+                        text = entry.name,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = entry.introduction.take(40).let {
+                            if (entry.introduction.length > 40) "$it..." else it
+                        },
+                        fontSize = 16.sp,
+                        color = Color.Black
+                    )
                 }
             }
         }

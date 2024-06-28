@@ -19,18 +19,18 @@ object CardSampleData {
 
         ),
         CardData(
-            title = "XSS攻击",
-            description = "XSS攻击是指攻击者在网页中注入恶意脚本，当用户浏览该网页时，恶意脚本会在用户的浏览器中执行。"
+            title = "XSS跨站脚本攻击",
+            description = "跨站脚本（Cross-Site Scripting，XSS）是一种经常出现在 WEB 应用程序中的计算机安全漏洞，是由于 WEB 应用程序对用户的输入过滤不足而产生的。"
             // 替换为实际的图片资源ID
         ),
         CardData(
-            title = "CSRF攻击",
-            description = "CSRF攻击是指攻击者通过伪造用户请求，使用户在不知情的情况下执行一些恶意操作。"
+            title = "SSRF服务端请求伪造",
+            description = "SSRF，Server-Side Request Forgery，服务端请求伪造，是一种由攻击者构造形成由服务器端发起请求的一个漏洞。"
             // 替换为实际的图片资源ID
         ),
         CardData(
-            title = "钓鱼攻击",
-            description = "钓鱼攻击是指攻击者通过伪装成可信任实体，诱骗用户提供敏感信息，如用户名、密码等。"
+            title = "RSA加密算法",
+            description = "RSA 加密算法是一种非对称加密算法。在公开密钥加密和电子商业中 RSA 被广泛使用。RSA 是 1977 年由罗纳德 · 李维斯特（Ron Rivest）、阿迪 · 萨莫尔（Adi Shamir）和伦纳德 · 阿德曼…"
             // 替换为实际的图片资源ID
         )
     )
