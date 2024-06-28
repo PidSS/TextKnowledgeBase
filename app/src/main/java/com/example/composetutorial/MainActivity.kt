@@ -114,24 +114,14 @@ fun MainScreen(
 ) {
     val navController = rememberNavController()
     var selectedTab by remember { mutableStateOf(0) }
-    var showBottomBar by remember { mutableStateOf(true) }
-    val entries by entryViewModel.entries.observeAsState(emptyList())
-    var searchText by remember { mutableStateOf("") }
-
-    val filteredCards = entries.filter {
-        it.name.contains(searchText, ignoreCase = true) ||
-                it.introduction.contains(searchText, ignoreCase = true)
-    }
 
     Scaffold(
-        topBar = { SearchBar(onSearchTextChange = { searchText = it }) },
+        topBar = { SearchBar() },
         bottomBar = {
-            if (showBottomBar) {
-                BottomNavigationBar(
-                    selectedTab = selectedTab,
-                    onTabSelected = { selectedTab = it }
-                )
-            }
+            BottomNavigationBar(
+                selectedTab = selectedTab,
+                onTabSelected = { selectedTab = it }
+            )
         }
     ) { innerPadding ->
         NavHost(
@@ -140,7 +130,6 @@ fun MainScreen(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") {
-                showBottomBar = true
                 HomeScreen(
                     cards = cards,
                     selectedTab = selectedTab,
@@ -151,7 +140,6 @@ fun MainScreen(
                 )
             }
             composable("details/{cardId}") { backStackEntry ->
-                showBottomBar = false
                 val cardId = backStackEntry.arguments?.getString("cardId")?.toInt()
                 val entries by entryViewModel.entries.observeAsState(emptyList())
                 val entry = entries.find { it.id == cardId }
@@ -160,13 +148,13 @@ fun MainScreen(
                     CardDetailScreen(entry = entry)
                 }
             }
+
+
             composable("favorites") {
-                showBottomBar = true
                 val entries by entryViewModel.entries.observeAsState(emptyList())
-                FavoriteScreen(entries = entries, navController = navController)
+                FavoriteScreen(entries=entries, navController = navController)
             }
             composable("profile") {
-                showBottomBar = true
                 ProfileScreen(
                     cards = cards,
                     selectedTab = selectedTab,
@@ -180,7 +168,6 @@ fun MainScreen(
         }
     }
 }
-
 
 
 
@@ -370,19 +357,12 @@ fun HomeScreen(
     isLoggedIn: Boolean,
     onLoginStatusChanged: (Boolean) -> Unit
 ) {
-    var searchText by remember { mutableStateOf("") }
     val entryViewModel: EntryViewModel = viewModel()
     val entries by entryViewModel.entries.observeAsState(emptyList())
     Box(modifier = Modifier.fillMaxSize()) {
-        val filteredCards = entries.filter {
-            it.name.contains(searchText, ignoreCase = true) ||
-                    it.introduction.contains(searchText, ignoreCase = true)
-        }
-        // 使用过滤后的卡片列表
-        HorizontalCardList(entries = filteredCards, navController = navController)
         when (selectedTab) {
             0 -> HorizontalCardList(entries = entries, navController = navController)
-            1 -> FavoriteScreen(entries = entries, navController = navController)
+            1 -> FavoriteScreen(entries=entries, navController = navController)
             2 -> ProfileScreen(
                 cards = cards,
                 selectedTab = selectedTab,
@@ -399,7 +379,7 @@ fun HomeScreen(
 
 
 @Composable
-fun SearchBar(onSearchTextChange: (String) -> Unit) {
+fun SearchBar() {
     // 创建一个状态来存储输入框的值
     var searchText by remember { mutableStateOf("") }
 
@@ -407,7 +387,6 @@ fun SearchBar(onSearchTextChange: (String) -> Unit) {
         value = searchText,
         onValueChange = { newText ->
             searchText = newText // 更新输入框的值
-            onSearchTextChange(newText) // 调用回调函数
         },
         placeholder = { Text("搜索") },
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
