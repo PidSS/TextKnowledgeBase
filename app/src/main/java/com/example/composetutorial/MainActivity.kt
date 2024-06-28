@@ -155,7 +155,7 @@ fun MainScreen(
                 val entry = entries.find { it.id == cardId }
 
                 if (entry != null) {
-                    CardDetailScreen(entry = entry)
+                    CardDetailScreen(entry = entry, entryViewModel = entryViewModel)
                 }
             }
             composable("favorites") {
@@ -250,6 +250,7 @@ fun LoginScreen(
                                 val token = response.token
                                 saveToken(context, token)
                                 successMessage = "登录成功，令牌: $token"
+                                delay(2000)
                                 errorMessage = ""
                                 println("登录成功，令牌: $token")
                                 userViewModel.login(username) // 调用 UserViewModel 的 login 方法
@@ -642,8 +643,7 @@ fun BottomNavigationBar(selectedTab: Int, onTabSelected: (Int) -> Unit, modifier
 
 
 @Composable
-fun CardDetailScreen(entry: Entry) {
-    val entryViewModel=EntryViewModel()
+fun CardDetailScreen(entry: Entry,entryViewModel: EntryViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -670,7 +670,7 @@ fun CardDetailScreen(entry: Entry) {
         Spacer(modifier = Modifier.height(16.dp))
         IconButton(onClick = { entryViewModel.toggleFavorite(entry) }) {
             if (entry.isFavorite) {
-                Icon(Icons.Default.Star, contentDescription = "Unfavorite", tint = Color.Yellow)
+                Icon(Icons.Default.Star, contentDescription = "Unfavorite", tint = Color.Blue)
             } else {
                 Icon(Icons.Default.StarBorder, contentDescription = "Favorite", tint = Color.Gray)
             }
