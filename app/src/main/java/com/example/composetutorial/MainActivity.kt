@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
@@ -55,6 +56,7 @@ import com.example.myapp.CardData
 import com.example.myapp.CardSampleData.cards
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 
 class MainActivity : ComponentActivity() {
@@ -63,6 +65,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             MainActivityContent()
         }
+    }
+}
+
+
+@Composable
+fun main() = runBlocking {
+    launch {
+        val currentContext = coroutineContext
+        println("Coroutine context: $currentContext")
     }
 }
 
@@ -157,6 +168,7 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
     var successMessage by remember { mutableStateOf("") }
     var navigateToHome by remember { mutableStateOf(false) } // 增加导航状态
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     if (navigateToHome) {
         LaunchedEffect(Unit) {
@@ -198,25 +210,20 @@ fun LoginScreen(onLogin: () -> Unit, onRegister: () -> Unit, navController: NavH
                     }
                     else try {
                         val request = LoginRequest(username, password)
-                        val response = RetrofitClient.instance.login(request) // 调用登录接口
-                        if (response != null && response.success) { // 检查 response 是否为空，再访问 success
-                            successMessage = "登录成功"
-                            errorMessage = ""
-                            onLogin()
-                            navController.navigate("home")
-                        } else {
-                            errorMessage = response?.message ?: "" // 使用安全调用运算符访问 message
-                            successMessage = "登录成功"
-                            onLogin()
-                            navController.navigate("home")
+                        val response = RetrofitClient.instance.login(request)
+                        if (response != null && response.id != null) {
+                            // 登录成功，获取并存储令牌
+                            val token = response.token
+                            saveToken(context, token)
+                            println("登录成功，令牌: $token")
                         }
-                    } catch (e: Exception) {
-                        errorMessage = "登录失败了：${e.message}"
-                        successMessage = ""
+                    }catch (e: Exception) {
+                        // 捕获并显示异常信息
+                        println("登录失败: ${e.message}")
                     }
                 }
             }) {
-                Text(text = "登录")
+                Text("登录")
             }
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = { showRegisterForm = true }) {
