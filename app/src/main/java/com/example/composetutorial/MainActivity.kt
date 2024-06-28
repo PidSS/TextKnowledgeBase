@@ -80,7 +80,7 @@ fun MainActivityContent() {
             onLoginStatusChanged = { isLoggedIn ->
                 if (isLoggedIn) {
                     // 在这里获取用户名，并传递给 ViewModel 的 login 方法
-                    val username = "your_username_here" // 从登录成功后的地方获取用户名
+                    val username = userViewModel.username // 从登录成功后的地方获取用户名
                     userViewModel.login(username)
                 } else {
                     userViewModel.logout() // 可选的，根据需要调用
