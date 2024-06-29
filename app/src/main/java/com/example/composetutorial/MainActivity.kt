@@ -52,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -68,7 +69,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MainActivityContent()
+            val entryViewModel: EntryViewModel = viewModel()
+            MainActivityContent(entryViewModel)
         }
     }
 }
@@ -77,26 +79,27 @@ class MainActivity : ComponentActivity() {
 
 
 @Composable
-fun MainActivityContent() {
+fun MainActivityContent(entryViewModel: EntryViewModel) {
     val navController = rememberNavController()
-    val userViewModel = remember { UserViewModel() } // 实例化 UserViewModel
-
+    //private lateinit var userViewModel:UserViewModel
+    val context = LocalContext.current
+    val userViewModel = ViewModelProvider(context as ComponentActivity).get(UserViewModel::class.java)
+    val isLoggedIn by userViewModel.isLoggedIn.observeAsState(initial = false)
+    val username by userViewModel.username.observeAsState(initial = "")
     ComposeTutorialTheme {
         MainScreen(
             cards = cards,
-            isLoggedIn = userViewModel.isLoggedIn,
+            isLoggedIn = isLoggedIn,
             onLoginStatusChanged = { isLoggedIn ->
                 if (isLoggedIn) {
-                    // 在这里获取用户名，并传递给 ViewModel 的 login 方法
-                    val username = userViewModel.username // 从登录成功后的地方获取用户名
+                    //val username = username
                     userViewModel.login(username)
                 } else {
-                    userViewModel.logout() // 可选的，根据需要调用
+                    userViewModel.logout()
                 }
             },
             userViewModel = userViewModel,
-            entryViewModel = EntryViewModel()
-
+            entryViewModel = entryViewModel
         )
     }
 }
@@ -161,7 +164,7 @@ fun MainScreen(
             composable("favorites") {
                 showBottomBar = true
                 val entries by entryViewModel.entries.observeAsState(emptyList())
-                FavoriteScreen(entries=entries, navController = navController)
+                FavoriteScreen(entries = entries, navController = navController)
             }
             composable("profile") {
                 showBottomBar = true
@@ -250,7 +253,7 @@ fun LoginScreen(
                                 val token = response.token
                                 saveToken(context, token)
                                 successMessage = "登录成功，令牌: $token"
-                                delay(2000)
+                                delay(1000)
                                 errorMessage = ""
                                 println("登录成功，令牌: $token")
                                 userViewModel.login(username) // 调用 UserViewModel 的 login 方法
@@ -376,7 +379,7 @@ fun HomeScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         when (selectedTab) {
             0 -> HorizontalCardList(entries = entries, navController = navController)
-            1 -> FavoriteScreen(entries=entries, navController = navController)
+            1 -> FavoriteScreen(entries = entries, navController = navController)
             2 -> ProfileScreen(
                 cards = cards,
                 selectedTab = selectedTab,
@@ -453,14 +456,25 @@ fun HorizontalCardList(entries: List<Entry>, navController: NavHostController) {
 
 @Composable
 fun FavoriteScreen(entries: List<Entry>, navController: NavHostController) {
-    val limitedEntries = entries.take(3)
+    val filteredEntries = entries.filter { it.isFavorite }
+
+    if (filteredEntries.isEmpty()) {
+        println("favoritescreen:No favorite entries found")
+    }
+
+    // 打印收藏状态
+    println("收藏状态变化:")
+    filteredEntries.forEach { entry ->
+        println("favoritescreen:Entry ID: ${entry.id}, isFavorite: ${entry.isFavorite}")
+    }
+
     LazyColumn(
         modifier = Modifier
             .padding(top = 75.dp, start = 16.dp, end = 16.dp)
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
-        items(limitedEntries) { entry ->
+        items(filteredEntries) { entry ->
             Card(
                 modifier = Modifier
                     .padding(8.dp)
@@ -493,6 +507,7 @@ fun FavoriteScreen(entries: List<Entry>, navController: NavHostController) {
 
 
 
+
 @Composable
 fun ProfileScreen(
     cards: List<CardData>,
@@ -504,6 +519,11 @@ fun ProfileScreen(
     entries: List<Entry>,
     userViewModel: UserViewModel // 接收 UserViewModel 实例
 ) {
+    //val isLoggedIn by userViewModel.isLoggedIn.observeAsState(initial = false)
+    val context = LocalContext.current
+    val viewModel = ViewModelProvider(context as ComponentActivity).get(UserViewModel::class.java)
+    val username by viewModel.username.observeAsState(initial = "")
+
     if (isLoggedIn) {
         // 已登录状态下显示的内容
         Column(
@@ -512,19 +532,19 @@ fun ProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "用户名: ${userViewModel.username}",
+                text = "用户名: $username",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(vertical = 16.dp)
             )
-            if (userViewModel.username.isEmpty()) {
+            if (false) {
                 Text(
                     text = "用户名为空",
                     color = Color.Red
                 )
             } else {
                 Text(
-                    text = "用户名不为空，用户名为: ${userViewModel.username}",
+                    text = "用户名不为空，用户名为: $username",
                     color = Color.Green
                 )
             }
@@ -644,6 +664,8 @@ fun BottomNavigationBar(selectedTab: Int, onTabSelected: (Int) -> Unit, modifier
 
 @Composable
 fun CardDetailScreen(entry: Entry,entryViewModel: EntryViewModel) {
+    val entries by entryViewModel.entries.observeAsState(emptyList())
+    val entry = entries.find { it.id == entry.id } ?: return
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -677,6 +699,9 @@ fun CardDetailScreen(entry: Entry,entryViewModel: EntryViewModel) {
         }
     }
 }
+
+
+
 
 
 

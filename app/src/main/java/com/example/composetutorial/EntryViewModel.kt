@@ -1,6 +1,7 @@
 package com.example.composetutorial
 
 import Entry
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -22,9 +23,19 @@ class EntryViewModel: ViewModel() {
         }
     }
 
+
     fun toggleFavorite(entry: Entry) {
         val updatedEntries = _entries.value?.map {
-            if (it.id == entry.id) it.copy(isFavorite = !it.isFavorite) else it
+            if (it.id == entry.id) {
+                val updatedEntry = it.copy(isFavorite = !it.isFavorite)
+                Log.d(
+                    "EntryViewModel",
+                    "Entry ${updatedEntry.id} isFavorite: ${updatedEntry.isFavorite}"
+                )
+                updatedEntry
+            } else {
+                it
+            }
         } ?: emptyList()
         _entries.value = updatedEntries
     }
