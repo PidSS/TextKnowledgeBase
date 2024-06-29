@@ -76,40 +76,27 @@ class MainActivity : ComponentActivity() {
 }
 
 
-
-
 @Composable
 fun MainActivityContent(entryViewModel: EntryViewModel) {
     val navController = rememberNavController()
     //private lateinit var userViewModel:UserViewModel
     val context = LocalContext.current
-    val userViewModel = ViewModelProvider(context as ComponentActivity).get(UserViewModel::class.java)
+    val userViewModel =
+        ViewModelProvider(context as ComponentActivity).get(UserViewModel::class.java)
     val isLoggedIn by userViewModel.isLoggedIn.observeAsState(initial = false)
     val username by userViewModel.username.observeAsState(initial = "")
     ComposeTutorialTheme {
         MainScreen(
             cards = cards,
             isLoggedIn = isLoggedIn,
-            onLoginStatusChanged = { isLoggedIn ->
-                if (isLoggedIn) {
-                    //val username = username
-                    userViewModel.login(username)
-                } else {
-                    userViewModel.logout()
-                }
+            onLoginStatusChanged = {
             },
             userViewModel = userViewModel,
-            entryViewModel = entryViewModel
-        )
+            entryViewModel = entryViewModel,
+
+            )
     }
 }
-
-
-
-
-
-
-
 
 
 @Composable
@@ -123,6 +110,8 @@ fun MainScreen(
     val navController = rememberNavController()
     var selectedTab by remember { mutableStateOf(0) }
     var showBottomBar by remember { mutableStateOf(true) }
+
+
 
     Scaffold(
         topBar = { SearchBar() },
@@ -178,12 +167,12 @@ fun MainScreen(
                     onLoginStatusChanged = onLoginStatusChanged,
                     userViewModel = userViewModel,
                     entries = entries
+
                 )
             }
         }
     }
 }
-
 
 
 
@@ -256,7 +245,7 @@ fun LoginScreen(
                                 delay(1000)
                                 errorMessage = ""
                                 println("登录成功，令牌: $token")
-                                userViewModel.login(username) // 调用 UserViewModel 的 login 方法
+                                userViewModel.login(username, token) // 调用 UserViewModel 的 login 方法
                                 println("登录成功，用户名为：$username")
                                 onLoginStatusChanged(true) // 更新登录状态
                                 navigateToHome = true
@@ -363,8 +352,6 @@ fun LoginScreen(
 }
 
 
-
-
 @Composable
 fun HomeScreen(
     cards: List<CardData>,
@@ -387,13 +374,12 @@ fun HomeScreen(
                 navController = navController,
                 isLoggedIn = isLoggedIn,
                 onLoginStatusChanged = onLoginStatusChanged,
-                userViewModel= UserViewModel(),
-                entries=entries
+                userViewModel = UserViewModel(),
+                entries = entries,
             )
         }
     }
 }
-
 
 
 @Composable
@@ -410,7 +396,7 @@ fun SearchBar() {
         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(8.dp)
     )
 }
 
@@ -419,7 +405,7 @@ fun SearchBar() {
 fun HorizontalCardList(entries: List<Entry>, navController: NavHostController) {
     LazyColumn(
         modifier = Modifier
-            .padding(top = 75.dp, start = 16.dp, end = 16.dp)
+            .padding(top = 40.dp, start = 16.dp, end = 16.dp)
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
@@ -455,18 +441,18 @@ fun HorizontalCardList(entries: List<Entry>, navController: NavHostController) {
 }
 
 @Composable
-fun FavoriteScreen(entries: List<Entry>, navController: NavHostController) {
-    val filteredEntries = entries.filter { it.isFavorite }
+fun FavoriteScreen(
+    entries: List<Entry>,
+    navController: NavHostController,
+) {
+    val entryViewModel = EntryViewModel()
+    val collections by entryViewModel.collections.observeAsState(initial = emptyList())
 
-    if (filteredEntries.isEmpty()) {
-        println("favoritescreen:No favorite entries found")
+    LaunchedEffect(Unit) {
+        entryViewModel.getProfile()
     }
 
-    // 打印收藏状态
-    println("收藏状态变化:")
-    filteredEntries.forEach { entry ->
-        println("favoritescreen:Entry ID: ${entry.id}, isFavorite: ${entry.isFavorite}")
-    }
+//    val collectionEntries = profileResponse.collections.map { it.id }
 
     LazyColumn(
         modifier = Modifier
@@ -474,13 +460,15 @@ fun FavoriteScreen(entries: List<Entry>, navController: NavHostController) {
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
-        items(filteredEntries) { entry ->
+        items(collections) { entry ->
             Card(
                 modifier = Modifier
                     .padding(8.dp)
                     .fillMaxWidth()
                     .wrapContentHeight()
-                    .clickable { navController.navigate("details/${entry.id}") }
+                    .clickable {
+                        navController.navigate("details/${entry.id}") // 点击跳转到详情页
+                    }
             ) {
                 Column(
                     modifier = Modifier
@@ -506,8 +494,6 @@ fun FavoriteScreen(entries: List<Entry>, navController: NavHostController) {
 }
 
 
-
-
 @Composable
 fun ProfileScreen(
     cards: List<CardData>,
@@ -517,7 +503,8 @@ fun ProfileScreen(
     isLoggedIn: Boolean,
     onLoginStatusChanged: (Boolean) -> Unit,
     entries: List<Entry>,
-    userViewModel: UserViewModel // 接收 UserViewModel 实例
+    userViewModel: UserViewModel, // 接收 UserViewModel 实例
+
 ) {
     //val isLoggedIn by userViewModel.isLoggedIn.observeAsState(initial = false)
     val context = LocalContext.current
@@ -544,7 +531,7 @@ fun ProfileScreen(
                 )
             } else {
                 Text(
-                    text = "用户名不为空，用户名为: $username",
+                    text = "",
                     color = Color.Green
                 )
             }
@@ -590,26 +577,25 @@ fun ProfileScreen(
                 }
             }
         }
-    }  else {
+    } else {
         // 未登录状态下显示的内容
         LoginScreen(
             navController = navController,
             onLogin = { onLoginStatusChanged(true) },
             onRegister = { onLoginStatusChanged(true) },
-            userViewModel = userViewModel ,// 传入 UserViewModel 实例
+            userViewModel = userViewModel,// 传入 UserViewModel 实例
             onLoginStatusChanged = onLoginStatusChanged
         )
     }
 }
 
 
-
-
-
-
-
 @Composable
-fun BottomNavigationBar(selectedTab: Int, onTabSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
+fun BottomNavigationBar(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
     NavigationBar(
         modifier = modifier
     ) {
@@ -663,7 +649,7 @@ fun BottomNavigationBar(selectedTab: Int, onTabSelected: (Int) -> Unit, modifier
 
 
 @Composable
-fun CardDetailScreen(entry: Entry,entryViewModel: EntryViewModel) {
+fun CardDetailScreen(entry: Entry, entryViewModel: EntryViewModel) {
     val entries by entryViewModel.entries.observeAsState(emptyList())
     val entry = entries.find { it.id == entry.id } ?: return
     Column(

@@ -1,6 +1,8 @@
 
+import com.example.composetutorial.RetrofitClient
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
 
 data class LoginRequest(val name: String, val password: String)
@@ -26,7 +28,7 @@ data class Entry(
     var isFavorite: Boolean = true,
 )
 
-data class Collection(
+data class Collectionn(
     val id: Int,
     val name: String,
     val introduction: String
@@ -36,11 +38,10 @@ data class ProfileResponse(
     val id: Int,
     val name: String,
     val avatar: String,
-    val collections: List<Collection>,
+    val collections: List<Collectionn>,
     val admin: Boolean,
     val feedbacks: List<Any>
 )
-
 
 
 
@@ -56,6 +57,16 @@ interface ApiService {
 
     @POST("updateFavorite")
     suspend fun updateFavorite(@Body request: UpdateFavoriteRequest): ProfileResponse
+
+    @POST("updateFavorite")
+    suspend fun updateFavoriteAndGetProfile(userViewModel: UserViewModel): ProfileResponse {
+        val updateRequest = UpdateFavoriteRequest(entryId = 1, isFavorite = true) // 根据实际情况设置 entryId 和 isFavorite
+        return RetrofitClient.instance.updateFavorite(updateRequest)
+    }
+
+    @GET("user/profile") // 根据您的实际接口路径修改
+    suspend fun getProfile(@Header("Authorization") token: String): ProfileResponse // 这里使用 suspend 函数以支持协程
+
 
 }
 
