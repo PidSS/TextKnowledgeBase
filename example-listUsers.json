@@ -1,0 +1,184 @@
+[
+    {
+        "id": 1,
+        "admin": false,
+        "name": "Pid",
+        "password": "12345",
+        "avatar": "/avatars/default_avatars/big-steve-face.png"
+    },
+    {
+        "id": 2,
+        "admin": false,
+        "name": "Dip",
+        "password": "12345",
+        "avatar": "/avatars/default_avatars/big-steve-face.png"
+    },
+    {
+        "id": 3,
+        "admin": false,
+        "name": "Idp",
+        "password": "12345",
+        "avatar": "/avatars/default_avatars/big-steve-face.png"
+    },
+    {
+        "id": 4,
+        "admin": false,
+        "name": "IPD",
+        "password": "12345",
+        "avatar": "/avatars/default_avatars/big-steve-face.png"
+    },
+    {
+        "id": 5,
+        "admin": true,
+        "name": "Admin",
+        "password": "12345",
+        "avatar": "/avatars/default_avatars/big-steve-face.png"
+    },
+    {
+        "id": 6,
+        "admin": false,
+        "name": "阿米诺斯",
+        "password": "12345",
+        "avatar": "/avatars/default_avatars/big-slime-face.png"
+    },
+    {
+        "id": 7,
+        "admin": false,
+        "name": "string",
+        "password": "string",
+        "avatar": "/avatars/default_avatars/big-vex-face.png"
+    },
+    {
+        "id": 8,
+        "admin": false,
+        "name": "s",
+        "password": "s",
+        "avatar": "/avatars/default_avatars/big-zombie-face.png"
+    },
+    {
+        "id": 9,
+        "admin": false,
+        "name": "ss",
+        "password": "s",
+        "avatar": "/avatars/default_avatars/big-steve-face.png"
+    },
+    {
+        "id": 10,
+        "admin": false,
+        "name": "小猫向日葵",
+        "password": "1437",
+        "avatar": "/avatars/default_avatars/big-snowgolem-face.png"
+    },
+    {
+        "id": 11,
+        "admin": false,
+        "name": "1437",
+        "password": "1437",
+        "avatar": "/avatars/default_avatars/big-vex-face.png"
+    },
+    {
+        "id": 12,
+        "admin": false,
+        "name": "why\t",
+        "password": "111111",
+        "avatar": "/avatars/default_avatars/big-steve-face.png"
+    },
+    {
+        "id": 13,
+        "admin": false,
+        "name": "小猫",
+        "password": "1437",
+        "avatar": "/avatars/default_avatars/big-husk-face.png"
+    },
+    {
+        "id": 14,
+        "admin": false,
+        "name": "狂野机枪射手",
+        "password": "1437",
+        "avatar": "/avatars/default_avatars/big-vex-face.png"
+    },
+    {
+        "id": 15,
+        "admin": false,
+        "name": "冰喷菇",
+        "password": "1437",
+        "avatar": "/avatars/default_avatars/big-zombie-face.png"
+    },
+    {
+        "id": 16,
+        "admin": false,
+        "name": "火爆坚果",
+        "password": "1437",
+        "avatar": "/avatars/default_avatars/big-snowgolem-face.png"
+    },
+    {
+        "id": 17,
+        "admin": false,
+        "name": "六神",
+        "password": "1437",
+        "avatar": "/avatars/default_avatars/big-slime-face.png"
+    },
+    {
+        "id": 18,
+        "admin": false,
+        "name": "11",
+        "password": "123",
+        "avatar": "/avatars/default_avatars/big-mooshroom-face.png"
+    },
+    {
+        "id": 19,
+        "admin": false,
+        "name": "土杨桃",
+        "password": "1437",
+        "avatar": "/avatars/default_avatars/big-mooshroom-face.png"
+    },
+    {
+        "id": 20,
+        "admin": false,
+        "name": "汉堡王",
+        "password": "1437",
+        "avatar": "/avatars/default_avatars/big-steve-face.png"
+    },
+    {
+        "id": 22,
+        "admin": false,
+        "name": "",
+        "password": "",
+        "avatar": "/avatars/default_avatars/big-mooshroom-face.png"
+    },
+    {
+        "id": 41,
+        "admin": false,
+        "name": "1",
+        "password": "11",
+        "avatar": "/avatars/default_avatars/big-zombie-face.png"
+    },
+    {
+        "id": 42,
+        "admin": false,
+        "name": "寒冰仙人掌",
+        "password": "1437",
+        "avatar": "/avatars/default_avatars/big-steve-face.png"
+    },
+    {
+        "id": 43,
+        "admin": false,
+        "name": "大喷菇",
+        "password": "1437",
+        "avatar": "/avatars/default_avatars/big-slime-face.png"
+    },
+    {
+        "id": 44,
+        "admin": false,
+        "name": "小盆菇",
+        "password": "1437",
+        "avatar": "/avatars/default_avatars/big-zombie-face.png"
+    },
+    {
+        "id": 45,
+        "admin": false,
+        "name": "高冰果",
+        "password": "1437",
+        "avatar": "/avatars/default_avatars/big-slime-face.png"
+    }
+]
