@@ -58,6 +58,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation("io.coil-kt:coil-compose:2.0.0")
+    implementation("io.coil-kt:coil-compose:2.1.0")
     implementation("androidx.compose.material:material:1.4.2")
     implementation("androidx.compose.material3:material3:1.2.1")
     implementation("androidx.compose.material3:material3-window-size-class:1.2.1")

@@ -7,6 +7,7 @@ import UserViewModel
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,10 +17,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -46,7 +49,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -58,6 +63,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.example.composetutorial.ui.theme.ComposeTutorialTheme
 import com.example.myapp.CardData
 import com.example.myapp.CardSampleData.cards
@@ -245,7 +251,7 @@ fun LoginScreen(
                                 delay(1000)
                                 errorMessage = ""
                                 println("登录成功，令牌: $token")
-                                userViewModel.login(username, token) // 调用 UserViewModel 的 login 方法
+                                userViewModel.login(username, token, response.avatar) // 调用 UserViewModel 的 login 方法
                                 println("登录成功，用户名为：$username")
                                 onLoginStatusChanged(true) // 更新登录状态
                                 navigateToHome = true
@@ -400,6 +406,15 @@ fun SearchBar() {
     )
 }
 
+@Composable
+fun AvatarImage(url: String, modifier: Modifier = Modifier) {
+    AsyncImage(
+        model = "http://joi.work$url",
+        contentDescription = "Avatar",
+        modifier = modifier,
+        contentScale = ContentScale.Crop
+    )
+}
 
 @Composable
 fun HorizontalCardList(entries: List<Entry>, navController: NavHostController) {
@@ -456,7 +471,7 @@ fun FavoriteScreen(
 
     LazyColumn(
         modifier = Modifier
-            .padding(top = 75.dp, start = 16.dp, end = 16.dp)
+            .padding(top = 35.dp, start = 16.dp, end = 16.dp)
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
@@ -510,6 +525,7 @@ fun ProfileScreen(
     val context = LocalContext.current
     val viewModel = ViewModelProvider(context as ComponentActivity).get(UserViewModel::class.java)
     val username by viewModel.username.observeAsState(initial = "")
+    val avatar by viewModel.avatar.observeAsState(initial = "")
 
     if (isLoggedIn) {
         // 已登录状态下显示的内容
@@ -518,6 +534,13 @@ fun ProfileScreen(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            AvatarImage(
+                url = avatar,
+                modifier = Modifier
+                    .size(100.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, Color.Gray, CircleShape)
+            )
             Text(
                 text = "用户名: $username",
                 fontSize = 24.sp,
@@ -543,7 +566,7 @@ fun ProfileScreen(
             )
             LazyColumn(
                 modifier = Modifier
-                    .padding(top = 75.dp, start = 16.dp, end = 16.dp)
+                    .padding(top = 35.dp, start = 16.dp, end = 16.dp)
                     .fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
